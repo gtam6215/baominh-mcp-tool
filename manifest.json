@@ -1,0 +1,36 @@
+{
+    "name": "Xiaozhi AI Relay MCP",
+    "version": "1.0.0",
+    "builds": [
+      {
+        "chipFamily": "ESP32",
+        "parts": [
+          { "path": "esp32_bootloader.bin", "offset": 4096 },
+          { "path": "esp32_partitions.bin", "offset": 32768 },
+          { "path": "esp32_firmware.bin", "offset": 65536 }
+        ]
+      },
+      {
+        "chipFamily": "ESP32-C3",
+        "parts": [
+          { "path": "c3_bootloader.bin", "offset": 0 },
+          { "path": "c3_partitions.bin", "offset": 32768 },
+          { "path": "c3_firmware.bin", "offset": 65536 }
+        ]
+      },
+      {
+        "chipFamily": "ESP32-S3",
+        "parts": [
+          { "path": "s3_bootloader.bin", "offset": 0 },
+          { "path": "s3_partitions.bin", "offset": 32768 },
+          { "path": "s3_firmware.bin", "offset": 65536 }
+        ]
+      },
+      {
+        "chipFamily": "ESP8266",
+        "parts": [
+          { "path": "firmware_8266.bin", "offset": 0 }
+        ]
+      }
+    ]
+  }

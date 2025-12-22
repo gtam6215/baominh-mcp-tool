@@ -3,29 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xiaozhi Pro - Setup Assistant</title>
+    <title>Bao Minh Setup Assistant</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .box { background: #1a1a1a; padding: 30px; border-radius: 20px; max-width: 450px; width: 90%; border: 1px solid #333; }
-        h2 { color: #2ecc71; margin: 0 0 10px 0; }
-        label { display: block; text-align: left; margin: 10px 0 5px; font-size: 14px; color: #aaa; }
-        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #222; color: white; box-sizing: border-box; margin-bottom: 10px; }
-        .btn { background: #2ecc71; color: black; border: none; padding: 15px; width: 100%; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; }
-        #log { margin-top: 15px; font-size: 12px; color: #2ecc71; text-align: left; background: #000; padding: 10px; border-radius: 5px; display: none; height: 60px; overflow-y: auto; }
+        body { font-family: sans-serif; background: #111; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { background: #1f1f1f; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; border: 1px solid #333; }
+        h2 { color: #00ff88; text-align: center; margin-top: 0; }
+        label { font-size: 12px; color: #aaa; margin-top: 10px; display: block; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
+        .btn { background: #00ff88; color: black; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
+        .btn:hover { background: #00cc6a; }
+        #log { margin-top: 15px; font-size: 12px; text-align: center; color: #00ff88; min-height: 20px; }
     </style>
 </head>
 <body>
     <div class="box">
         <h2>CẤU HÌNH THIẾT BỊ</h2>
-        <p style="font-size: 13px; color: #888;">Tự động tạo Agent và đồng bộ qua cổng USB.</p>
         
-        <label>Xiaozhi MCP Token:</label>
-        <input type="text" id="token" placeholder="Dán Token từ xiaozhi.me">
-        
-        <label>Tên thiết bị (ví dụ: DenTran, QuatCay):</label>
-        <input type="text" id="name" placeholder="DenChum">
+        <label>Xiaozhi Token (MCP)</label>
+        <input type="text" id="token" placeholder="Dán Token dài vào đây...">
 
-        <label>Khu vực / Phòng:</label>
+        <label>Tên Thiết Bị</label>
+        <input type="text" id="name" placeholder="Ví dụ: DenChum">
+
+        <label>Khu Vực / Phòng</label>
         <select id="room">
             <option value="PhongKhach">Phòng Khách</option>
             <option value="PhongNgu">Phòng Ngủ</option>
@@ -33,86 +33,67 @@
             <option value="SanVuon">Sân Vườn</option>
         </select>
 
-        <button class="btn" onclick="runSetup()">KẾT NỐI & ĐỒNG BỘ</button>
+        <button class="btn" onclick="runProcess()">ĐỒNG BỘ & KÍCH HOẠT</button>
         <div id="log"></div>
     </div>
 
     <script>
-        function updateLog(msg) {
-            const l = document.getElementById('log');
-            l.style.display = 'block';
-            l.innerHTML += "> " + msg + "<br>";
-        }
-
-        async function runSetup() {
+        async function runProcess() {
             const token = document.getElementById('token').value.trim();
-            const name = document.getElementById('name').value.trim() || "Relay8K";
+            const name = document.getElementById('name').value.trim() || "ThietBi";
             const room = document.getElementById('room').value;
+            const log = document.getElementById('log');
 
-            if (!token) { alert("Vui lòng nhập Token!"); return; }
+            if (!token) { alert("Chưa nhập Token!"); return; }
 
             try {
-                // Bước 1: Kích hoạt Agent trên Cloud (Logic Python chuyển sang JS)
-                updateLog("Đang kết nối Cloud Xiaozhi...");
-                await registerCloud(token, name, room);
+                // BƯỚC 1: ĐĂNG KÝ LÊN CLOUD (Tạo Endpoint)
+                log.innerText = "☁️ Đang đăng ký Endpoint lên Xiaozhi...";
+                await registerToCloud(token, name, room);
 
-                // Bước 2: Bắn dữ liệu vào ESP qua Serial
-                updateLog("Đang gửi dữ liệu qua USB...");
+                // BƯỚC 2: GỬI VÀO CHIP QUA USB
+                log.innerText = "🔌 Đang ghi vào Chip...";
                 const port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
                 const writer = port.writable.getWriter();
                 
-                // Gửi định dạng: SET_CONFIG:TOKEN,NAME,ROOM
+                // Gửi định dạng: SET_CONFIG:token,name,room
                 const data = `SET_CONFIG:${token},${name},${room}\n`;
                 await writer.write(new TextEncoder().encode(data));
                 
                 writer.releaseLock();
                 await port.close();
-                updateLog("✅ Thành công! Thiết bị đang khởi động lại.");
-                alert("Đồng bộ hoàn tất!");
+
+                log.innerHTML = "✅ THÀNH CÔNG!<br>Thiết bị đang khởi động lại.";
             } catch (err) {
-                updateLog("❌ Lỗi: " + err.message);
+                log.innerText = "❌ Lỗi: " + err.message;
             }
         }
 
-        function registerCloud(token, dName, rName) {
+        // Logic giả lập thiết bị để tạo Endpoint trên Cloud
+        function registerToCloud(token, dName, rName) {
             return new Promise((resolve, reject) => {
                 const ws = new WebSocket(`wss://api.xiaozhi.me/mcp/?token=${token}`);
                 ws.onmessage = (e) => {
-                    const msg = JSON.parse(e.data);
-                    // Phản hồi Initialize theo protocol MCP
-                    if (msg.method === "initialize") {
+                    const d = JSON.parse(e.data);
+                    // Phản hồi Initialize
+                    if (d.method === "initialize") {
                         ws.send(JSON.stringify({
-                            "jsonrpc": "2.0", "id": msg.id,
-                            "result": {
-                                "protocolVersion": "2024-11-05",
-                                "serverInfo": { "name": `${rName}-${dName}`, "version": "1.0.0" }
-                            }
+                            "jsonrpc": "2.0", "id": d.id,
+                            "result": { "protocolVersion": "2024-11-05", "serverInfo": { "name": `[${rName}] ${dName}`, "version": "1.0.0" } }
                         }));
                     }
-                    // Đăng ký Tools điều khiển relay
-                    if (msg.method === "tools/list") {
+                    // Đăng ký Tool (Endpoint)
+                    if (d.method === "tools/list") {
                         ws.send(JSON.stringify({
-                            "jsonrpc": "2.0", "id": msg.id,
-                            "result": {
-                                "tools": [{
-                                    "name": "control_relay",
-                                    "description": `Điều khiển thiết bị tại ${rName}`,
-                                    "inputSchema": {
-                                        "type": "object",
-                                        "properties": {
-                                            "id": { "type": "integer" },
-                                            "on": { "type": "boolean" }
-                                        }
-                                    }
-                                }]
-                            }
+                            "jsonrpc": "2.0", "id": d.id,
+                            "result": { "tools": [{ "name": "control_relay", "description": `Điều khiển tại ${rName}`, "inputSchema": { "type": "object", "properties": { "id": {"type":"integer"}, "on": {"type":"boolean"} } } }] }
                         }));
-                        setTimeout(() => { ws.close(); resolve(); }, 1000);
+                        setTimeout(() => { ws.close(); resolve(); }, 1500); // Đợi server xác nhận rồi đóng
                     }
                 };
-                ws.onerror = () => reject(new Error("Không kết nối được Cloud."));
-                setTimeout(() => reject(new Error("Cloud timeout")), 8000);
+                ws.onerror = () => reject(new Error("Lỗi kết nối Token!"));
+                setTimeout(() => reject(new Error("Timeout Cloud")), 8000);
             });
         }
     </script>

@@ -3,44 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bao Minh IoT - Flash Tool</title>
+    <title>Bao Minh Flash Tool</title>
     <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
     <style>
-        :root { --primary-color: #2ecc71; --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .container { max-width: 450px; width: 90%; background: var(--card-bg); padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); border: 1px solid #333; text-align: center; }
-        .logo { font-size: 28px; font-weight: 800; color: var(--primary-color); margin-bottom: 10px; display: flex; align-items: center; justify-content: center; }
-        .dot { height: 10px; width: 10px; background-color: var(--primary-color); border-radius: 50%; margin-right: 12px; box-shadow: 0 0 10px var(--primary-color); animation: blink 1.5s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-        p { color: #aaa; font-size: 14px; margin-bottom: 30px; }
-        .btn-glow { background: var(--primary-color); color: #000; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
-        #next-step { display: none; margin-top: 25px; animation: fadeIn 0.5s ease; }
-        .btn-setup { background: #3498db; color: white; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        body { font-family: sans-serif; background: #111; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .box { background: #222; padding: 40px; border-radius: 20px; text-align: center; border: 1px solid #333; width: 400px; }
+        h2 { color: #0f0; margin: 0 0 10px; }
+        p { color: #888; margin-bottom: 30px; }
+        .btn-hide { display: none; }
+        .btn-next { background: #3498db; color: white; padding: 15px; width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
+        .btn-next:hover { background: #2980b9; }
+        /* Tùy chỉnh màu nút nạp của thư viện */
+        esp-web-install-button { --esp-tools-button-color: #0f0; --esp-tools-button-border-radius: 8px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo"><span class="dot"></span>BAO MINH IOT TOOL</div>
-        <h3>Production Flash Tool</h3>
-        <p>Hỗ trợ: ESP32, S3, C3 và ESP8266.<br>Vui lòng dùng trình duyệt Chrome hoặc Edge.</p>
+    <div class="box">
+        <h2>FIRMWARE FLASH TOOL</h2>
+        <p>Công cụ nạp phần mềm IoT chuyên nghiệp</p>
         
-        <esp-web-install-button id="installer" erase-first manifest="./manifest.json">
-            <button slot="activate" class="btn-glow">BẮT ĐẦU KẾT NỐI</button>
+        <esp-web-install-button id="installBtn" erase-first manifest="./manifest.json">
+            <button slot="activate" style="background:#0f0; padding:15px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; width:100%;">BẮT ĐẦU KẾT NỐI</button>
         </esp-web-install-button>
 
-        <div id="next-step">
-            <p style="color: var(--primary-color); font-weight: bold;">✅ Nạp firmware thành công!</p>
-            <button class="btn-setup" onclick="window.location.href='setup.html'">TIẾP THEO: CÀI ĐẶT THIẾT BỊ</button>
+        <div id="nextArea" class="btn-hide">
+            <p style="color: #0f0; font-weight: bold; margin-bottom: 10px;">✅ NẠP THÀNH CÔNG!</p>
+            <button class="btn-next" onclick="window.location.href='setup.html'">CÀI ĐẶT THIẾT BỊ NGAY</button>
         </div>
     </div>
 
     <script>
-        const installer = document.getElementById('installer');
-        installer.addEventListener('at-status-update', (e) => {
+        const btn = document.getElementById('installBtn');
+        btn.addEventListener('at-status-update', (e) => {
+            console.log("Status:", e.detail.status);
             if (e.detail.status === 'finished') {
-                installer.style.display = 'none';
-                document.getElementById('next-step').style.display = 'block';
+                btn.style.display = 'none'; // Ẩn nút nạp
+                document.getElementById('nextArea').style.display = 'block'; // Hiện nút tiếp theo
             }
         });
     </script>

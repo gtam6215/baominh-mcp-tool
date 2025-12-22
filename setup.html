@@ -8,23 +8,27 @@
         .box { background: #1f1f1f; padding: 30px; border-radius: 15px; width: 400px; border: 1px solid #333; }
         input, select { width: 100%; padding: 12px; margin: 5px 0 15px; background: #222; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
         button { background: #0f0; width: 100%; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; }
-        #log { margin-top: 15px; color: #0f0; font-size: 13px; white-space: pre-wrap; }
+        button:hover { background: #00cc00; }
+        #log { margin-top: 15px; color: #0f0; font-size: 13px; white-space: pre-wrap; line-height: 1.5; }
+        .error { color: #ff4444 !important; }
     </style>
 </head>
 <body>
     <div class="box">
         <h2 style="color:#0f0; text-align:center">CẤU HÌNH THIẾT BỊ</h2>
-        <label>Token Xiaozhi:</label>
-        <input type="text" id="token" placeholder="Dán Token...">
         
-        <label>Tên Thiết Bị:</label>
+        <label style="font-size:12px; color:#aaa">Token Xiaozhi (Dán cả link wss:// cũng được):</label>
+        <input type="text" id="token" placeholder="Dán Token vào đây...">
+        
+        <label style="font-size:12px; color:#aaa">Tên Thiết Bị:</label>
         <input type="text" id="name" placeholder="Ví dụ: CongTac">
         
-        <label>Khu Vực:</label>
+        <label style="font-size:12px; color:#aaa">Khu Vực:</label>
         <select id="room">
             <option value="PhongKhach">Phòng Khách</option>
             <option value="PhongNgu">Phòng Ngủ</option>
             <option value="Bep">Bếp</option>
+            <option value="SanVuon">Sân Vườn</option>
         </select>
         
         <button onclick="run()">ĐỒNG BỘ NGAY</button>
@@ -32,42 +36,101 @@
     </div>
 
     <script>
-        function log(m) { document.getElementById('log').innerText = m; }
+        function log(m, isErr=false) { 
+            const el = document.getElementById('log');
+            el.innerHTML = m; 
+            el.className = isErr ? 'error' : '';
+        }
+
+        // Hàm thông minh: Tự động trích xuất Token từ đường link
+        function extractToken(input) {
+            input = input.trim();
+            // Nếu người dùng dán cả link wss://...
+            if (input.includes("token=")) {
+                return input.split("token=")[1]; // Lấy phần sau dấu bằng
+            }
+            return input; // Nếu chỉ dán token thì giữ nguyên
+        }
+
         async function run() {
-            const t = document.getElementById('token').value;
-            const n = document.getElementById('name').value;
+            let rawInput = document.getElementById('token').value;
+            const token = extractToken(rawInput); // Lọc Token chuẩn
+            const n = document.getElementById('name').value.trim() || "ThietBi";
             const r = document.getElementById('room').value;
-            if(!t) return alert("Nhập Token!");
+
+            if(!token) return alert("Vui lòng nhập Token!");
+            
+            // Xóa log cũ
+            log("⏳ Đang xử lý...");
 
             try {
-                log("1. Đang kết nối Cloud...");
-                await regCloud(t, n, r);
+                // 1. KẾT NỐI CLOUD XIAOZHI
+                log("1. Đang kết nối Cloud Xiaozhi...");
+                await regCloud(token, n, r);
                 
-                log("2. Đang ghi vào Chip (Nếu lỗi hãy rút cáp cắm lại)...");
+                // 2. GHI VÀO CHIP
+                log("2. Đang ghi vào Chip (Chọn cổng USB)...");
                 const p = await navigator.serial.requestPort();
                 await p.open({baudRate: 115200});
                 const w = p.writable.getWriter();
-                await w.write(new TextEncoder().encode(`SET_CONFIG:${t},${n},${r}\n`));
-                w.releaseLock(); await p.close();
                 
-                log("✅ XONG! Thiết bị đang khởi động lại.");
-                alert("Thành công! Hãy kết nối WiFi cho thiết bị.");
-            } catch(e) { log("Lỗi: " + e.message + "\n(Hãy thử rút cáp USB và cắm lại)"); }
+                // Gửi dữ liệu xuống chip
+                await w.write(new TextEncoder().encode(`SET_CONFIG:${token},${n},${r}\n`));
+                
+                w.releaseLock(); 
+                await p.close();
+                
+                log("✅ XONG! Thiết bị đang khởi động lại.\nHãy kết nối WiFi 'Xiaozhi_...' cho thiết bị.");
+            } catch(e) { 
+                console.error(e);
+                log("❌ Lỗi: " + e.message + "\n(Mẹo: Hãy thử rút cáp USB ra và cắm lại)", true); 
+            }
         }
 
         function regCloud(t, d, r) {
             return new Promise((resolve, reject) => {
+                // Tạo kết nối WebSocket với Token đã được lọc sạch
                 const ws = new WebSocket(`wss://api.xiaozhi.me/mcp/?token=${t}`);
+                
+                ws.onopen = () => log("-> Đã kết nối Socket...");
+                
                 ws.onmessage = (e) => {
-                    const j = JSON.parse(e.data);
-                    if(j.method=="initialize") ws.send(JSON.stringify({jsonrpc:"2.0",id:j.id,result:{protocolVersion:"2024-11-05",serverInfo:{name:`[${r}] ${d}`,version:"1.0"}}}));
-                    if(j.method=="tools/list") {
-                        ws.send(JSON.stringify({jsonrpc:"2.0",id:j.id,result:{tools:[{name:"control_relay",description:`Dieu khien tai ${r}`,inputSchema:{type:"object",properties:{id:{type:"integer"},on:{type:"boolean"}}}}]}}));
-                        setTimeout(()=>{ws.close();resolve()},1000);
-                    }
+                    try {
+                        const j = JSON.parse(e.data);
+                        // Phản hồi Initialize
+                        if(j.method=="initialize") {
+                            ws.send(JSON.stringify({
+                                jsonrpc:"2.0", id:j.id,
+                                result:{
+                                    protocolVersion:"2024-11-05",
+                                    serverInfo:{name:`[${r}] ${d}`, version:"1.0"}
+                                }
+                            }));
+                        }
+                        // Đăng ký Tools
+                        if(j.method=="tools/list") {
+                            ws.send(JSON.stringify({
+                                jsonrpc:"2.0", id:j.id,
+                                result:{
+                                    tools:[{
+                                        name:"control_relay",
+                                        description:`Dieu khien tai ${r}`,
+                                        inputSchema:{type:"object", properties:{id:{type:"integer"}, on:{type:"boolean"}}}
+                                    }]
+                                }
+                            }));
+                            // Đợi 1 chút cho server nhận tin rồi đóng
+                            setTimeout(()=>{ ws.close(); resolve(); }, 1000);
+                        }
+                    } catch(err) { console.log(err); }
                 };
-                ws.onerror=()=>reject(new Error("Token lỗi"));
-                setTimeout(()=>reject(new Error("Timeout")),5000);
+                
+                ws.onerror = (err) => {
+                    console.log(err);
+                    reject(new Error("Token sai hoặc không kết nối được Xiaozhi"));
+                };
+                // Timeout nếu server không phản hồi sau 5s
+                setTimeout(()=>reject(new Error("Timeout: Server không phản hồi")), 8000);
             });
         }
     </script>

@@ -3,162 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xiaozhi AI Flash Tool</title>
+    <title>Bao Minh IoT - Flash Tool</title>
     <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
     <style>
-        :root {
-            --primary-color: #2ecc71;
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --text-color: #ffffff;
-            --accent-color: #3498db;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .container {
-            max-width: 450px;
-            width: 90%;
-            background: var(--card-bg);
-            padding: 40px;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-            border: 1px solid #333;
-            text-align: center;
-        }
-
-        .logo {
-            font-size: 28px;
-            font-weight: 800;
-            color: var(--primary-color);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            letter-spacing: 1px;
-        }
-
-        .dot {
-            height: 10px;
-            width: 10px;
-            background-color: var(--primary-color);
-            border-radius: 50%;
-            margin-right: 12px;
-            box-shadow: 0 0 10px var(--primary-color);
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.3; }
-            100% { opacity: 1; }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        h3 { margin: 10px 0; color: #eee; font-weight: 600; }
-        p { color: #aaa; line-height: 1.6; margin-bottom: 25px; font-size: 14px; }
-
-        /* Nút nạp mặc định */
-        .btn-glow {
-            background-color: var(--primary-color);
-            color: #000;
-            padding: 16px 32px;
-            border: none;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 800;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            text-transform: uppercase;
-            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.2);
-        }
-
-        .btn-glow:hover {
-            transform: translateY(-2px);
-            background-color: #27ae60;
-            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.4);
-        }
-
-        /* Nút Setup xuất hiện sau khi nạp xong */
-        .btn-setup {
-            background-color: var(--accent-color);
-            color: white;
-            padding: 16px 32px;
-            border: none;
-            border-radius: 12px;
-            font-size: 15px;
-            font-weight: 800;
-            cursor: pointer;
-            width: 100%;
-            text-transform: uppercase;
-            margin-top: 15px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
-        }
-
-        .btn-setup:hover {
-            background-color: #2980b9;
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
-        }
-
-        .footer-info {
-            margin-top: 30px;
-            font-size: 11px;
-            color: #666;
-            line-height: 1.5;
-        }
+        :root { --primary-color: #2ecc71; --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { max-width: 450px; width: 90%; background: var(--card-bg); padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4); border: 1px solid #333; text-align: center; }
+        .logo { font-size: 28px; font-weight: 800; color: var(--primary-color); margin-bottom: 10px; display: flex; align-items: center; justify-content: center; }
+        .dot { height: 10px; width: 10px; background-color: var(--primary-color); border-radius: 50%; margin-right: 12px; box-shadow: 0 0 10px var(--primary-color); animation: blink 1.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        p { color: #aaa; font-size: 14px; margin-bottom: 30px; }
+        .btn-glow { background: var(--primary-color); color: #000; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; text-transform: uppercase; }
+        #next-step { display: none; margin-top: 25px; animation: fadeIn 0.5s ease; }
+        .btn-setup { background: #3498db; color: white; padding: 16px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; width: 100%; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="logo"><span class="dot"></span>BAO MINH IOT TOOL</div>
         <h3>Production Flash Tool</h3>
-        <p>Hỗ trợ: ESP32, S3, C3 và ESP8266.<br>Yêu cầu trình duyệt nhân Chromium (Chrome, Edge).</p>
+        <p>Hỗ trợ: ESP32, S3, C3 và ESP8266.<br>Vui lòng dùng trình duyệt Chrome hoặc Edge.</p>
         
-        <esp-web-install-button erase-first manifest="./manifest.json">
+        <esp-web-install-button id="installer" erase-first manifest="./manifest.json">
             <button slot="activate" class="btn-glow">BẮT ĐẦU KẾT NỐI</button>
         </esp-web-install-button>
 
-        <div id="next-step" style="display:none; margin-top:30px; animation: fadeIn 0.8s ease-out forwards;">
-            <p style="color: #2ecc71; font-weight: bold; margin-bottom: 15px;">🎉 Nạp chương trình thành công!</p>
-            <button class="btn-setup" onclick="window.location.href='setup.html'">
-                TIẾP THEO: CÀI ĐẶT THIẾT BỊ
-            </button>
-        </div>
-
-        <div class="footer-info">
-            Thiết bị cần được đưa về chế độ Bootloader (nếu cần) <br>
-            © 2025 Xiaozhi AI Ecosystem & Bao Minh IoT
+        <div id="next-step">
+            <p style="color: var(--primary-color); font-weight: bold;">✅ Nạp firmware thành công!</p>
+            <button class="btn-setup" onclick="window.location.href='setup.html'">TIẾP THEO: CÀI ĐẶT THIẾT BỊ</button>
         </div>
     </div>
 
     <script>
-        const installBtn = document.querySelector('esp-web-install-button');
-        
-        // Theo dõi trạng thái nạp firmware
-        installBtn.addEventListener('at-status-update', (e) => {
-            console.log("Trạng thái hiện tại:", e.detail.status);
-            
-            // Khi trạng thái chuyển sang 'finished' (nạp và kiểm tra xong)
+        const installer = document.getElementById('installer');
+        installer.addEventListener('at-status-update', (e) => {
             if (e.detail.status === 'finished') {
-                // Ẩn nút nạp ban đầu để tránh bấm nhầm
-                installBtn.style.display = 'none';
-                // Hiện nút chuyển sang bước Setup
+                installer.style.display = 'none';
                 document.getElementById('next-step').style.display = 'block';
             }
         });

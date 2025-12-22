@@ -2,22 +2,24 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Bao Minh Setup</title>
+    <title>Bao Minh Setup Final</title>
     <style>
         body { font-family: sans-serif; background: #111; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .box { background: #1f1f1f; padding: 30px; border-radius: 15px; width: 400px; border: 1px solid #333; }
         input, select { width: 100%; padding: 12px; margin: 5px 0 15px; background: #222; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
         button { background: #0f0; width: 100%; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; font-size: 15px; }
         button:hover { background: #00cc00; }
-        #log { margin-top: 15px; color: #0f0; font-size: 13px; white-space: pre-wrap; line-height: 1.5; background: #000; padding: 10px; border-radius: 5px; display: none; }
-        .error { color: #ff4444 !important; }
+        #log { margin-top: 15px; background: #000; padding: 10px; border-radius: 5px; display: none; font-size: 13px; line-height: 1.5; }
+        .success { color: #0f0; }
+        .info { color: #3498db; }
+        .error { color: #ff4444; }
     </style>
 </head>
 <body>
     <div class="box">
         <h2 style="color:#0f0; text-align:center">CẤU HÌNH THIẾT BỊ</h2>
         
-        <label style="font-size:12px; color:#aaa">Token Xiaozhi (Dán link wss:// thoải mái):</label>
+        <label style="font-size:12px; color:#aaa">Token Xiaozhi (Link wss:// cũng được):</label>
         <input type="text" id="token" placeholder="Dán Token vào đây...">
         
         <label style="font-size:12px; color:#aaa">Tên Thiết Bị:</label>
@@ -31,15 +33,15 @@
             <option value="SanVuon">Sân Vườn</option>
         </select>
         
-        <button onclick="run()">CHỌN CỔNG USB & ĐỒNG BỘ</button>
+        <button id="btn" onclick="run()">CHỌN CỔNG USB & ĐỒNG BỘ</button>
         <div id="log"></div>
     </div>
 
     <script>
-        function log(m, isErr=false) { 
+        function log(m, type="info") { 
             const el = document.getElementById('log');
             el.style.display = 'block';
-            el.innerHTML += `<div class="${isErr?'error':''}">${m}</div>`;
+            el.innerHTML += `<div class="${type}">${m}</div>`;
             el.scrollTop = el.scrollHeight;
         }
 
@@ -50,8 +52,8 @@
         }
 
         async function run() {
-            // Xóa log cũ
             document.getElementById('log').innerHTML = "";
+            const btn = document.getElementById('btn');
             
             let rawInput = document.getElementById('token').value;
             const token = extractToken(rawInput);
@@ -62,41 +64,48 @@
 
             let port;
             try {
-                // BƯỚC 1: YÊU CẦU CỔNG USB NGAY LẬP TỨC (Tránh bị trình duyệt chặn)
-                // Một cửa sổ popup sẽ hiện ra ở góc trên bên trái
+                // 1. CHỌN CỔNG USB
                 port = await navigator.serial.requestPort();
-                log("✅ Đã chọn cổng USB.");
+                
+                // 2. MỞ CỔNG NGAY (QUAN TRỌNG: Để giữ kết nối không bị mất)
+                await port.open({baudRate: 115200});
+                log("✅ Đã kết nối USB thành công.", "success");
+                
+                btn.disabled = true; // Khóa nút để tránh bấm nhiều lần
             } catch (e) {
-                return log("❌ Bạn chưa chọn cổng USB hoặc đã hủy bỏ.", true);
+                return log("❌ Lỗi mở cổng USB: " + e.message + "<br>(Hãy đóng tab cũ hoặc rút cáp cắm lại)", "error");
             }
 
             try {
-                // BƯỚC 2: KẾT NỐI CLOUD (Chạy ngầm)
-                log("⏳ Đang đăng ký Cloud Xiaozhi...");
+                // 3. KẾT NỐI CLOUD
+                log("⏳ Đang đăng ký Cloud Xiaozhi...", "info");
                 await regCloud(token, n, r);
-                log("✅ Đăng ký Cloud thành công!");
+                log("✅ Đăng ký Cloud xong!", "success");
 
-                // BƯỚC 3: GHI VÀO CHIP
-                log("⏳ Đang ghi cấu hình vào Chip...");
-                await port.open({baudRate: 115200});
-                const w = p = port.writable.getWriter();
+                // 4. GHI VÀO CHIP
+                log("⏳ Đang ghi dữ liệu xuống Chip...", "info");
+                const writer = port.writable.getWriter();
+                await writer.write(new TextEncoder().encode(`SET_CONFIG:${token},${n},${r}\n`));
+                writer.releaseLock();
                 
-                await w.write(new TextEncoder().encode(`SET_CONFIG:${token},${n},${r}\n`));
-                
-                w.releaseLock(); 
-                await port.close();
-                
-                log("🎉 XONG! Thiết bị đang khởi động lại.");
+                log("🎉 THÀNH CÔNG! Thiết bị đang khởi động lại.", "success");
                 alert("Cài đặt hoàn tất!");
+                
             } catch(e) { 
-                console.error(e);
-                log("❌ Lỗi: " + e.message, true); 
+                log("❌ Lỗi: " + e.message, "error"); 
+            } finally {
+                // Luôn đóng cổng dù thành công hay thất bại
+                if (port) await port.close();
+                btn.disabled = false;
             }
         }
 
         function regCloud(t, d, r) {
             return new Promise((resolve, reject) => {
                 const ws = new WebSocket(`wss://api.xiaozhi.me/mcp/?token=${t}`);
+                let isDone = false;
+
+                ws.onopen = () => { console.log("Socket open"); };
                 
                 ws.onmessage = (e) => {
                     try {
@@ -104,30 +113,22 @@
                         if(j.method=="initialize") {
                             ws.send(JSON.stringify({
                                 jsonrpc:"2.0", id:j.id,
-                                result:{
-                                    protocolVersion:"2024-11-05",
-                                    serverInfo:{name:`[${r}] ${d}`, version:"1.0"}
-                                }
+                                result:{protocolVersion:"2024-11-05", serverInfo:{name:`[${r}] ${d}`, version:"1.0"}}
                             }));
                         }
                         if(j.method=="tools/list") {
                             ws.send(JSON.stringify({
                                 jsonrpc:"2.0", id:j.id,
-                                result:{
-                                    tools:[{
-                                        name:"control_relay",
-                                        description:`Dieu khien tai ${r}`,
-                                        inputSchema:{type:"object", properties:{id:{type:"integer"}, on:{type:"boolean"}}}
-                                    }]
-                                }
+                                result:{tools:[{name:"control_relay", description:`Dieu khien tai ${r}`, inputSchema:{type:"object", properties:{id:{type:"integer"}, on:{type:"boolean"}}}}] }
                             }));
-                            setTimeout(()=>{ ws.close(); resolve(); }, 1000);
+                            isDone = true;
+                            setTimeout(()=>{ ws.close(); resolve(); }, 500);
                         }
                     } catch(err) {}
                 };
                 
-                ws.onerror = () => reject(new Error("Lỗi kết nối Xiaozhi (Kiểm tra Token)"));
-                setTimeout(()=>reject(new Error("Server Xiaozhi phản hồi quá lâu")), 8000);
+                ws.onerror = () => { if(!isDone) reject(new Error("Token không đúng hoặc lỗi mạng")); };
+                setTimeout(()=> { if(!isDone) reject(new Error("Timeout: Server không phản hồi")); }, 8000);
             });
         }
     </script>

@@ -102,7 +102,22 @@
         <esp-web-install-button erase-first manifest="./manifest.json">
             <button slot="activate" class="btn-glow">BẮT ĐẦU KẾT NỐI</button>
         </esp-web-install-button>
-        
+        <div id="next-step" style="display:none; text-align:center; margin-top:30px; animation: fadeIn 1s;">
+          <p style="color: #2ecc71; font-weight: bold;">🎉 Nạp thành công! Chip đã sẵn sàng.</p>
+          <button class="btn-setup" onclick="window.location.href='setup.html'">
+           TIẾP THEO: CẤU HÌNH TOKEN & CLOUD
+          </button>
+        </div>
+
+        <script>
+          const installBtn = document.querySelector('esp-web-install-button');
+          installBtn.addEventListener('at-status-update', (e) => {
+           // Khi trạng thái chuyển sang 'finished' (đã nạp xong)
+            if (e.detail.status === 'finished') {
+              document.getElementById('next-step').style.display = 'block';
+            }
+          });
+        </script>
         <div class="footer-info">
             Trình duyệt phải hỗ trợ WebSerial API <br>
             © 2025 Xiaozhi AI Ecosystem
@@ -110,4 +125,5 @@
     </div>
 </body>
 </html>
+
 

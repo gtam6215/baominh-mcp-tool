@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Xiaozhi Setup Assistant</title>
+    <style>
+        body { font-family: sans-serif; background: #111; color: #eee; text-align: center; padding: 50px; }
+        .card { background: #222; border-radius: 15px; padding: 30px; max-width: 400px; margin: auto; border: 1px solid #333; }
+        input { width: 90%; padding: 12px; margin: 10px 0; background: #333; color: #fff; border: 1px solid #444; border-radius: 5px; }
+        .btn { background: #2ecc71; color: #000; padding: 15px; width: 100%; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        #status { margin-top: 20px; color: #2ecc71; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>XIAOZHI AI SETUP</h2>
+        <input type="text" id="token" placeholder="Dán Token Xiaozhi vào đây">
+        <input type="text" id="name" placeholder="Tên thiết bị (ví dụ: DenChum)">
+        <button class="btn" onclick="syncAll()">ĐỒNG BỘ NGAY</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+        async function syncAll() {
+            const token = document.getElementById('token').value;
+            const name = document.getElementById('name').value || "Relay8K";
+            const status = document.getElementById('status');
+
+            try {
+                // 1. Kích hoạt Agent trên Cloud (Dựa trên xiaozhi_youtube-ok.py)
+                status.innerText = "⏳ Đang đăng ký chức năng lên Cloud...";
+                await registerMCP(token, name);
+
+                // 2. Bắn dữ liệu vào ESP32 qua USB
+                status.innerText = "⏳ Đang ghi dữ liệu vào thiết bị...";
+                const port = await navigator.serial.requestPort();
+                await port.open({ baudRate: 115200 });
+                const writer = port.writable.getWriter();
+                await writer.write(new TextEncoder().encode(`SET_CONFIG:${token},${name}\n`));
+                writer.releaseLock();
+                
+                status.innerText = "✅ HOÀN TẤT! Thiết bị đã sẵn sàng.";
+            } catch (e) {
+                status.innerText = "❌ Lỗi: " + e.message;
+            }
+        }
+
+        function registerMCP(token, devName) {
+            return new Promise((resolve, reject) => {
+                const ws = new WebSocket(`wss://api.xiaozhi.me/mcp/?token=${token}`);
+                ws.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    // Phản hồi Initialize và tools/list theo protocol MCP
+                    if (data.method === "initialize") {
+                        ws.send(JSON.stringify({ "jsonrpc":"2.0", "id": data.id, "result": {"protocolVersion":"2024-11-05", "serverInfo":{"name": devName, "version":"1.0.0"}} }));
+                    }
+                    if (data.method === "tools/list") {
+                        ws.send(JSON.stringify({ "jsonrpc":"2.0", "id": data.id, "result": {"tools": [{"name":"control_relay", "description":"Bật/Tắt Relay", "inputSchema":{"type":"object","properties":{"id":{"type":"integer"},"on":{"type":"boolean"}} }}] } }));
+                        setTimeout(() => { ws.close(); resolve(); }, 1000);
+                    }
+                };
+                ws.onerror = () => reject(new Error("Kết nối Cloud thất bại"));
+            });
+        }
+    </script>
+</body>
+</html>

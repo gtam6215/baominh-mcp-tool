@@ -2,133 +2,164 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Bao Minh Setup Final</title>
+    <title>Bao Minh Setup DEBUG</title>
     <style>
-        body { font-family: sans-serif; background: #111; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: #1f1f1f; padding: 30px; border-radius: 15px; width: 400px; border: 1px solid #333; }
-        input, select { width: 100%; padding: 12px; margin: 5px 0 15px; background: #222; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
-        button { background: #0f0; width: 100%; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; font-size: 15px; }
-        button:hover { background: #00cc00; }
-        #log { margin-top: 15px; background: #000; padding: 10px; border-radius: 5px; display: none; font-size: 13px; line-height: 1.5; }
-        .success { color: #0f0; }
+        body { font-family: monospace; background: #000; color: #0f0; padding: 20px; }
+        .box { border: 1px solid #333; padding: 20px; max-width: 600px; margin: auto; }
+        input, select { width: 100%; padding: 10px; margin: 5px 0 15px; background: #222; border: 1px solid #444; color: white; }
+        button { background: #0f0; color: #000; width: 100%; padding: 15px; font-weight: bold; cursor: pointer; border: none; font-size: 16px; }
+        #log { margin-top: 20px; border-top: 1px dashed #444; padding-top: 10px; color: #fff; font-size: 13px; white-space: pre-wrap; }
+        .err { color: #ff4444; font-weight: bold; }
+        .ok { color: #0f0; }
         .info { color: #3498db; }
-        .error { color: #ff4444; }
     </style>
 </head>
 <body>
     <div class="box">
-        <h2 style="color:#0f0; text-align:center">CẤU HÌNH THIẾT BỊ</h2>
+        <h2 style="text-align:center; color:#0f0">CÔNG CỤ CẤU HÌNH (CHẾ ĐỘ DEBUG)</h2>
         
-        <label style="font-size:12px; color:#aaa">Token Xiaozhi (Link wss:// cũng được):</label>
-        <input type="text" id="token" placeholder="Dán Token vào đây...">
+        <label>Token:</label>
+        <input type="text" id="token" placeholder="Dán Token...">
         
-        <label style="font-size:12px; color:#aaa">Tên Thiết Bị:</label>
-        <input type="text" id="name" placeholder="Ví dụ: CongTac">
+        <label>Tên Thiết Bị:</label>
+        <input type="text" id="name" value="TestDevice">
         
-        <label style="font-size:12px; color:#aaa">Khu Vực:</label>
+        <label>Khu Vực:</label>
         <select id="room">
             <option value="PhongKhach">Phòng Khách</option>
-            <option value="PhongNgu">Phòng Ngủ</option>
-            <option value="Bep">Bếp</option>
-            <option value="SanVuon">Sân Vườn</option>
         </select>
         
-        <button id="btn" onclick="run()">CHỌN CỔNG USB & ĐỒNG BỘ</button>
-        <div id="log"></div>
+        <button id="btn" onclick="runDebug()">BẮT ĐẦU ĐỒNG BỘ</button>
+        
+        <div id="log">Logs sẽ hiện ở đây...</div>
     </div>
 
     <script>
-        function log(m, type="info") { 
+        function log(msg, type="info") {
             const el = document.getElementById('log');
-            el.style.display = 'block';
-            el.innerHTML += `<div class="${type}">${m}</div>`;
+            const time = new Date().toLocaleTimeString();
+            el.innerHTML += `<div class="${type}">[${time}] ${msg}</div>`;
             el.scrollTop = el.scrollHeight;
+            console.log(msg);
         }
 
-        function extractToken(input) {
-            input = input.trim();
-            if (input.includes("token=")) return input.split("token=")[1];
-            return input;
-        }
-
-        async function run() {
-            document.getElementById('log').innerHTML = "";
+        async function runDebug() {
+            document.getElementById('log').innerHTML = ""; // Xóa log cũ
             const btn = document.getElementById('btn');
             
-            let rawInput = document.getElementById('token').value;
-            const token = extractToken(rawInput);
-            const n = document.getElementById('name').value.trim() || "ThietBi";
-            const r = document.getElementById('room').value;
+            // 1. Lấy dữ liệu
+            let rawInput = document.getElementById('token').value.trim();
+            if (!rawInput) return log("❌ Chưa nhập Token!", "err");
+            
+            let token = rawInput;
+            if (rawInput.includes("token=")) token = rawInput.split("token=")[1];
+            
+            const name = document.getElementById('name').value;
+            const room = document.getElementById('room').value;
 
-            if(!token) return alert("Vui lòng nhập Token!");
+            log("🚀 Bắt đầu quy trình...", "info");
+            log(`- Token: ${token.substring(0, 10)}...`);
+            log(`- Thiết bị: ${name} @ ${room}`);
 
             let port;
             try {
-                // 1. CHỌN CỔNG USB
+                // 2. Chọn cổng
+                log("👉 Vui lòng chọn cổng USB trong cửa sổ hiện ra...", "info");
                 port = await navigator.serial.requestPort();
-                
-                // 2. MỞ CỔNG NGAY (QUAN TRỌNG: Để giữ kết nối không bị mất)
-                await port.open({baudRate: 115200});
-                log("✅ Đã kết nối USB thành công.", "success");
-                
-                btn.disabled = true; // Khóa nút để tránh bấm nhiều lần
-            } catch (e) {
-                return log("❌ Lỗi mở cổng USB: " + e.message + "<br>(Hãy đóng tab cũ hoặc rút cáp cắm lại)", "error");
-            }
+                log("✅ Đã chọn cổng USB.", "ok");
 
-            try {
-                // 3. KẾT NỐI CLOUD
-                log("⏳ Đang đăng ký Cloud Xiaozhi...", "info");
-                await regCloud(token, n, r);
-                log("✅ Đăng ký Cloud xong!", "success");
+                // 3. Mở cổng ngay
+                log("⚡ Đang mở cổng USB (open)...", "info");
+                await port.open({ baudRate: 115200 });
+                log("✅ Cổng USB đã mở thành công.", "ok");
+                
+                // Kiểm tra quyền ghi
+                if (!port.writable) throw new Error("Cổng USB không cho phép ghi (port.writable = null)");
+                log("- Trạng thái cổng: Sẵn sàng ghi.", "info");
 
-                // 4. GHI VÀO CHIP
-                log("⏳ Đang ghi dữ liệu xuống Chip...", "info");
+                btn.disabled = true;
+
+                // 4. Đăng ký Cloud
+                log("☁️ Đang kết nối Cloud Xiaozhi (có thể mất vài giây)...", "info");
+                await regCloud(token, name, room);
+                log("✅ Đăng ký Cloud HOÀN TẤT.", "ok");
+
+                // 5. Ghi dữ liệu (Phần hay lỗi nhất)
+                log("🔌 Chuẩn bị ghi vào chip...", "info");
+                
+                log("- Đang tạo Writer...", "info");
                 const writer = port.writable.getWriter();
-                await writer.write(new TextEncoder().encode(`SET_CONFIG:${token},${n},${r}\n`));
+                log("✅ Đã tạo Writer.", "ok");
+
+                const dataStr = `SET_CONFIG:${token},${name},${room}\n`;
+                log(`- Đang mã hóa dữ liệu (${dataStr.length} bytes)...`, "info");
+                const dataEncoded = new TextEncoder().encode(dataStr);
+
+                log("🚀 ĐANG GỬI DỮ LIỆU (WRITE)...", "info");
+                await writer.write(dataEncoded);
+                log("✅ GHI THÀNH CÔNG (WRITE DONE).", "ok");
+
+                log("- Đang nhả khóa (releaseLock)...", "info");
                 writer.releaseLock();
                 
-                log("🎉 THÀNH CÔNG! Thiết bị đang khởi động lại.", "success");
-                alert("Cài đặt hoàn tất!");
-                
-            } catch(e) { 
-                log("❌ Lỗi: " + e.message, "error"); 
+                log("🔒 Đang đóng cổng USB...", "info");
+                await port.close();
+                log("✅ Đã đóng cổng.", "ok");
+
+                log("🎉🎉 TẤT CẢ ĐÃ XONG! THIẾT BỊ SẼ KHỞI ĐỘNG LẠI.", "ok");
+                alert("Thành công!");
+
+            } catch (e) {
+                log(`❌ LỖI NGHIÊM TRỌNG: ${e.message}`, "err");
+                log("⚠️ Gợi ý: Hãy rút cáp USB ra, cắm lại và tải lại trang web (F5).", "err");
             } finally {
-                // Luôn đóng cổng dù thành công hay thất bại
-                if (port) await port.close();
                 btn.disabled = false;
             }
         }
 
         function regCloud(t, d, r) {
             return new Promise((resolve, reject) => {
+                log("- Đang mở WebSocket...", "info");
                 const ws = new WebSocket(`wss://api.xiaozhi.me/mcp/?token=${t}`);
                 let isDone = false;
 
-                ws.onopen = () => { console.log("Socket open"); };
+                ws.onopen = () => log("- WebSocket đã kết nối.", "ok");
                 
                 ws.onmessage = (e) => {
                     try {
                         const j = JSON.parse(e.data);
+                        log(`- Nhận tin từ Server: ${j.method}`, "info");
+                        
                         if(j.method=="initialize") {
+                            log("  -> Gửi phản hồi Initialize...", "info");
                             ws.send(JSON.stringify({
                                 jsonrpc:"2.0", id:j.id,
                                 result:{protocolVersion:"2024-11-05", serverInfo:{name:`[${r}] ${d}`, version:"1.0"}}
                             }));
                         }
                         if(j.method=="tools/list") {
+                            log("  -> Gửi danh sách Tools...", "info");
                             ws.send(JSON.stringify({
                                 jsonrpc:"2.0", id:j.id,
                                 result:{tools:[{name:"control_relay", description:`Dieu khien tai ${r}`, inputSchema:{type:"object", properties:{id:{type:"integer"}, on:{type:"boolean"}}}}] }
                             }));
                             isDone = true;
-                            setTimeout(()=>{ ws.close(); resolve(); }, 500);
+                            // Đóng nhanh để chuyển sang bước ghi
+                            setTimeout(()=>{ 
+                                ws.close(); 
+                                resolve(); 
+                            }, 500);
                         }
-                    } catch(err) {}
+                    } catch(err) { log("! Lỗi parse JSON", "err"); }
                 };
                 
-                ws.onerror = () => { if(!isDone) reject(new Error("Token không đúng hoặc lỗi mạng")); };
-                setTimeout(()=> { if(!isDone) reject(new Error("Timeout: Server không phản hồi")); }, 8000);
+                ws.onerror = () => { 
+                    if(!isDone) reject(new Error("Token sai hoặc lỗi mạng không kết nối được Xiaozhi")); 
+                };
+                
+                setTimeout(()=> { 
+                    if(!isDone) reject(new Error("Timeout: Server Xiaozhi không phản hồi sau 8s")); 
+                }, 8000);
             });
         }
     </script>

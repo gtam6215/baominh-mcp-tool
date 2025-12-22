@@ -2,98 +2,72 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bao Minh Setup Assistant</title>
+    <title>Bao Minh Setup</title>
     <style>
         body { font-family: sans-serif; background: #111; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { background: #1f1f1f; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; border: 1px solid #333; }
-        h2 { color: #00ff88; text-align: center; margin-top: 0; }
-        label { font-size: 12px; color: #aaa; margin-top: 10px; display: block; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
-        .btn { background: #00ff88; color: black; width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
-        .btn:hover { background: #00cc6a; }
-        #log { margin-top: 15px; font-size: 12px; text-align: center; color: #00ff88; min-height: 20px; }
+        .box { background: #1f1f1f; padding: 30px; border-radius: 15px; width: 400px; border: 1px solid #333; }
+        input, select { width: 100%; padding: 12px; margin: 5px 0 15px; background: #222; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
+        button { background: #0f0; width: 100%; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; }
+        #log { margin-top: 15px; color: #0f0; font-size: 13px; white-space: pre-wrap; }
     </style>
 </head>
 <body>
     <div class="box">
-        <h2>CẤU HÌNH THIẾT BỊ</h2>
+        <h2 style="color:#0f0; text-align:center">CẤU HÌNH THIẾT BỊ</h2>
+        <label>Token Xiaozhi:</label>
+        <input type="text" id="token" placeholder="Dán Token...">
         
-        <label>Xiaozhi Token (MCP)</label>
-        <input type="text" id="token" placeholder="Dán Token dài vào đây...">
-
-        <label>Tên Thiết Bị</label>
-        <input type="text" id="name" placeholder="Ví dụ: DenChum">
-
-        <label>Khu Vực / Phòng</label>
+        <label>Tên Thiết Bị:</label>
+        <input type="text" id="name" placeholder="Ví dụ: CongTac">
+        
+        <label>Khu Vực:</label>
         <select id="room">
             <option value="PhongKhach">Phòng Khách</option>
             <option value="PhongNgu">Phòng Ngủ</option>
-            <option value="NhaBep">Nhà Bếp</option>
-            <option value="SanVuon">Sân Vườn</option>
+            <option value="Bep">Bếp</option>
         </select>
-
-        <button class="btn" onclick="runProcess()">ĐỒNG BỘ & KÍCH HOẠT</button>
+        
+        <button onclick="run()">ĐỒNG BỘ NGAY</button>
         <div id="log"></div>
     </div>
 
     <script>
-        async function runProcess() {
-            const token = document.getElementById('token').value.trim();
-            const name = document.getElementById('name').value.trim() || "ThietBi";
-            const room = document.getElementById('room').value;
-            const log = document.getElementById('log');
-
-            if (!token) { alert("Chưa nhập Token!"); return; }
+        function log(m) { document.getElementById('log').innerText = m; }
+        async function run() {
+            const t = document.getElementById('token').value;
+            const n = document.getElementById('name').value;
+            const r = document.getElementById('room').value;
+            if(!t) return alert("Nhập Token!");
 
             try {
-                // BƯỚC 1: ĐĂNG KÝ LÊN CLOUD (Tạo Endpoint)
-                log.innerText = "☁️ Đang đăng ký Endpoint lên Xiaozhi...";
-                await registerToCloud(token, name, room);
-
-                // BƯỚC 2: GỬI VÀO CHIP QUA USB
-                log.innerText = "🔌 Đang ghi vào Chip...";
-                const port = await navigator.serial.requestPort();
-                await port.open({ baudRate: 115200 });
-                const writer = port.writable.getWriter();
+                log("1. Đang kết nối Cloud...");
+                await regCloud(t, n, r);
                 
-                // Gửi định dạng: SET_CONFIG:token,name,room
-                const data = `SET_CONFIG:${token},${name},${room}\n`;
-                await writer.write(new TextEncoder().encode(data));
+                log("2. Đang ghi vào Chip (Nếu lỗi hãy rút cáp cắm lại)...");
+                const p = await navigator.serial.requestPort();
+                await p.open({baudRate: 115200});
+                const w = p.writable.getWriter();
+                await w.write(new TextEncoder().encode(`SET_CONFIG:${t},${n},${r}\n`));
+                w.releaseLock(); await p.close();
                 
-                writer.releaseLock();
-                await port.close();
-
-                log.innerHTML = "✅ THÀNH CÔNG!<br>Thiết bị đang khởi động lại.";
-            } catch (err) {
-                log.innerText = "❌ Lỗi: " + err.message;
-            }
+                log("✅ XONG! Thiết bị đang khởi động lại.");
+                alert("Thành công! Hãy kết nối WiFi cho thiết bị.");
+            } catch(e) { log("Lỗi: " + e.message + "\n(Hãy thử rút cáp USB và cắm lại)"); }
         }
 
-        // Logic giả lập thiết bị để tạo Endpoint trên Cloud
-        function registerToCloud(token, dName, rName) {
+        function regCloud(t, d, r) {
             return new Promise((resolve, reject) => {
-                const ws = new WebSocket(`wss://api.xiaozhi.me/mcp/?token=${token}`);
+                const ws = new WebSocket(`wss://api.xiaozhi.me/mcp/?token=${t}`);
                 ws.onmessage = (e) => {
-                    const d = JSON.parse(e.data);
-                    // Phản hồi Initialize
-                    if (d.method === "initialize") {
-                        ws.send(JSON.stringify({
-                            "jsonrpc": "2.0", "id": d.id,
-                            "result": { "protocolVersion": "2024-11-05", "serverInfo": { "name": `[${rName}] ${dName}`, "version": "1.0.0" } }
-                        }));
-                    }
-                    // Đăng ký Tool (Endpoint)
-                    if (d.method === "tools/list") {
-                        ws.send(JSON.stringify({
-                            "jsonrpc": "2.0", "id": d.id,
-                            "result": { "tools": [{ "name": "control_relay", "description": `Điều khiển tại ${rName}`, "inputSchema": { "type": "object", "properties": { "id": {"type":"integer"}, "on": {"type":"boolean"} } } }] }
-                        }));
-                        setTimeout(() => { ws.close(); resolve(); }, 1500); // Đợi server xác nhận rồi đóng
+                    const j = JSON.parse(e.data);
+                    if(j.method=="initialize") ws.send(JSON.stringify({jsonrpc:"2.0",id:j.id,result:{protocolVersion:"2024-11-05",serverInfo:{name:`[${r}] ${d}`,version:"1.0"}}}));
+                    if(j.method=="tools/list") {
+                        ws.send(JSON.stringify({jsonrpc:"2.0",id:j.id,result:{tools:[{name:"control_relay",description:`Dieu khien tai ${r}`,inputSchema:{type:"object",properties:{id:{type:"integer"},on:{type:"boolean"}}}}]}}));
+                        setTimeout(()=>{ws.close();resolve()},1000);
                     }
                 };
-                ws.onerror = () => reject(new Error("Lỗi kết nối Token!"));
-                setTimeout(() => reject(new Error("Timeout Cloud")), 8000);
+                ws.onerror=()=>reject(new Error("Token lỗi"));
+                setTimeout(()=>reject(new Error("Timeout")),5000);
             });
         }
     </script>

@@ -3,211 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bao Minh Setup Pro V3</title>
+    <title>Bao Minh Factory Setup</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #e0e0e0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f0f12; color: #eee; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
         .container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; width: 100%; max-width: 900px; }
-        .box-config { background: #1a1a1a; padding: 30px; border-radius: 16px; flex: 1; min-width: 300px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .box-diagram { background: #161616; padding: 30px; border-radius: 16px; flex: 1; min-width: 300px; border: 1px solid #333; display: flex; flex-direction: column; align-items: center; }
-        h2 { color: #00ff88; text-align: center; margin-top: 0; font-size: 22px; }
-        h3 { color: #3498db; margin: 0 0 15px 0; font-size: 18px; text-align: center; }
-        
-        /* STYLE BẢNG SƠ ĐỒ MỚI */
-        .pin-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 15px; }
-        .pin-table th { text-align: left; color: #aaa; border-bottom: 1px solid #444; padding: 8px; font-weight: normal; }
-        .pin-table td { padding: 10px 8px; border-bottom: 1px solid #2a2a2a; }
-        .relay-pin { color: #00ff88; font-weight: bold; }
-        .chip-pin { color: #fff; font-family: monospace; font-size: 15px; }
-        
-        label { font-size: 12px; color: #888; margin-left: 2px; display: block; margin-top: 10px; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; background: #252525; border: 1px solid #444; color: white; border-radius: 8px; box-sizing: border-box; outline: none; transition: 0.3s; }
-        input:focus, select:focus { border-color: #00ff88; background: #2a2a2a; }
-        
-        button { background: linear-gradient(135deg, #00ff88, #00cc6a); color: #000; width: 100%; padding: 16px; font-weight: 800; cursor: pointer; border: none; border-radius: 10px; font-size: 16px; margin-top: 25px; transition: 0.2s; box-shadow: 0 4px 15px rgba(0, 255, 136, 0.2); }
-        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4); }
-        button:disabled { background: #555; cursor: not-allowed; transform: none; box-shadow: none; }
-        
-        #log { margin-top: 20px; background: #000; padding: 15px; border-radius: 8px; display: none; font-size: 13px; line-height: 1.6; max-height: 200px; overflow-y: auto; border-left: 3px solid #00ff88; font-family: monospace; }
-        .success { color: #00ff88; } .error { color: #ff4444; } .info { color: #3498db; } .warn { color: #f1c40f; }
-        .diagram-svg { width: 100%; max-width: 280px; margin: 10px 0; }
+        .box { background: #1e1e24; padding: 25px; border-radius: 12px; flex: 1; min-width: 300px; border: 1px solid #333; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        h2 { color: #00e676; text-align: center; margin-top: 0; }
+        label { font-size: 13px; color: #aaa; margin-top: 10px; display: block; }
+        input, select { width: 100%; padding: 12px; margin-top: 5px; background: #2b2b36; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; outline: none; }
+        input:focus { border-color: #00e676; background: #333; }
+        button { background: #00e676; color: #000; width: 100%; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; font-size: 16px; margin-top: 20px; transition: 0.2s; }
+        button:hover { background: #00c853; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        #log { margin-top: 15px; font-family: monospace; font-size: 12px; color: #888; white-space: pre-wrap; }
+        .pin-map { font-size: 12px; color: #ccc; margin-top: 10px; line-height: 1.6; border-top: 1px solid #444; padding-top: 10px; }
     </style>
 </head>
-<body onload="updateDiagram()">
-    <div class="container">
-        <div class="box-config">
-            <h2>CẤU HÌNH THIẾT BỊ</h2>
-            <label>Token Xiaozhi (MCP):</label>
-            <input type="text" id="token" placeholder="Dán Token vào đây...">
-            <label>Tên Thiết Bị:</label>
-            <input type="text" id="name" value="ThietBi">
-            <label>Khu Vực:</label>
-            <select id="room">
-                <option value="PhongKhach">Phòng Khách</option>
-                <option value="PhongNgu">Phòng Ngủ</option>
-                <option value="Bep">Nhà Bếp</option>
-            </select>
-            <div style="display: flex; gap: 10px;">
-                <div style="flex: 1;">
-                    <label>Loại Chip:</label>
-                    <select id="chipType" onchange="updateDiagram()">
-                        <option value="c3">C3 SuperMini</option>
-                        <option value="s3">ESP32-S3</option>
-                        <option value="8266">ESP8266</option>
-                        <option value="esp32">ESP32 Thường</option>
-                    </select>
-                </div>
-                <div style="flex: 1;">
-                    <label>Số Kênh Relay:</label>
-                    <select id="channels">
-                        <option value="8">8 Kênh</option>
-                        <option value="4">4 Kênh</option>
-                        <option value="2">2 Kênh</option>
-                    </select>
-                </div>
+<body>
+
+<div class="container">
+    <div class="box">
+        <h2>CẤU HÌNH THIẾT BỊ</h2>
+        <label>Token Xiaozhi:</label>
+        <input type="text" id="token" placeholder="Dán mã Token (ey...) vào đây">
+        
+        <div style="display: flex; gap: 10px;">
+            <div style="flex:1">
+                <label>Tên Gốc (Prefix):</label>
+                <input type="text" id="name" value="Đèn" placeholder="VD: Đèn">
             </div>
-            <button id="btn" onclick="run()">CHỌN CỔNG USB & ĐỒNG BỘ</button>
-            <div id="log"></div>
+            <div style="flex:1">
+                <label>Phòng/Vị Trí:</label>
+                <input type="text" id="room" value="Phòng Khách">
+            </div>
         </div>
 
-        <div class="box-diagram">
-            <h3>SƠ ĐỒ <span id="chipLabel"></span></h3>
-            <div id="svgContainer"></div>
-            
-            <table class="pin-table">
-                <thead><tr><th>Trên Mạch Relay</th><th>Trên ESP32</th></tr></thead>
-                <tbody id="pinList"></tbody>
-            </table>
-            
-            <p style="font-size: 11px; color: #666; margin-top: 20px; text-align: center; border-top: 1px solid #333; padding-top: 10px;">
-                * Cấp nguồn 5V vào chân 5V (hoặc VIN) và GND.<br>
-                * Các chân IN (Relay) nối vào chân GPIO tương ứng.
-            </p>
+        <div style="display: flex; gap: 10px;">
+            <div style="flex:1">
+                <label>Loại Chip:</label>
+                <select id="chip" onchange="updateMap()">
+                    <option value="c3">C3 SuperMini</option>
+                    <option value="s3">ESP32-S3</option>
+                    <option value="8266">ESP8266</option>
+                    <option value="esp32">ESP32 Thường</option>
+                </select>
+            </div>
+            <div style="flex:1">
+                <label>Số Kênh:</label>
+                <select id="ch">
+                    <option value="1">1 Kênh</option>
+                    <option value="2">2 Kênh</option>
+                    <option value="4" selected>4 Kênh</option>
+                    <option value="8">8 Kênh</option>
+                </select>
+            </div>
         </div>
+
+        <button id="btn" onclick="startConfig()">KẾT NỐI USB & CẤU HÌNH</button>
+        <div id="log"></div>
     </div>
 
-    <script>
-        const pinouts = {
-            c3: { 
-                name: "C3 SuperMini", 
-                pins: [
-                    {relay:"VCC (+)", pin:"5V", note:"Nguồn"}, {relay:"GND (-)", pin:"GND", note:"Mát"},
-                    {relay:"IN 1", pin:"GPIO 0"}, {relay:"IN 2", pin:"GPIO 1"},
-                    {relay:"IN 3", pin:"GPIO 2"}, {relay:"IN 4", pin:"GPIO 3"},
-                    {relay:"IN 5", pin:"GPIO 4"}, {relay:"IN 6", pin:"GPIO 5"},
-                    {relay:"IN 7", pin:"GPIO 6"}, {relay:"IN 8", pin:"GPIO 7"}
-                ],
-                svg: `<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg"><rect x="50" y="20" width="100" height="160" rx="10" fill="#222" stroke="#444" stroke-width="2"/><text x="100" y="100" text-anchor="middle" fill="#555" font-size="20" transform="rotate(-90, 100, 100)">C3 MINI</text><circle cx="165" cy="40" r="8" fill="#00ff88"/><text x="175" y="44" fill="#00ff88" font-size="10">0</text><text x="135" y="44" fill="#fff" font-size="9" text-anchor="end">IN1</text><circle cx="165" cy="65" r="8" fill="#00ff88"/><text x="175" y="69" fill="#00ff88" font-size="10">1</text><text x="135" y="69" fill="#fff" font-size="9" text-anchor="end">IN2</text><circle cx="165" cy="90" r="8" fill="#00ff88"/><text x="175" y="94" fill="#00ff88" font-size="10">2</text><text x="135" y="94" fill="#fff" font-size="9" text-anchor="end">IN3</text><circle cx="165" cy="115" r="8" fill="#00ff88"/><text x="175" y="119" fill="#00ff88" font-size="10">3</text><text x="135" y="119" fill="#fff" font-size="9" text-anchor="end">IN4</text><rect x="70" y="175" width="60" height="20" fill="#bbb" rx="3"/></svg>`
-            },
-            s3: {
-                name: "ESP32-S3", 
-                pins: [
-                    {relay:"VCC (+)", pin:"5V / VIN", note:"Nguồn"}, {relay:"GND (-)", pin:"GND", note:"Mát"},
-                    {relay:"IN 1", pin:"GPIO 4"}, {relay:"IN 2", pin:"GPIO 5"},
-                    {relay:"IN 3", pin:"GPIO 6"}, {relay:"IN 4", pin:"GPIO 7"},
-                    {relay:"IN 5", pin:"GPIO 15"}, {relay:"IN 6", pin:"GPIO 16"}
-                ],
-                svg: `<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg"><rect x="40" y="10" width="120" height="200" rx="3" fill="#111" stroke="#444" stroke-width="2"/><text x="100" y="110" text-anchor="middle" fill="#555" font-size="20" transform="rotate(-90, 100, 100)">ESP32-S3</text><circle cx="25" cy="50" r="8" fill="#00ff88"/><text x="0" y="54" fill="#00ff88" font-size="10">4</text><text x="45" y="54" fill="#fff" font-size="9">IN1</text><circle cx="25" cy="70" r="8" fill="#00ff88"/><text x="0" y="74" fill="#00ff88" font-size="10">5</text><text x="45" y="74" fill="#fff" font-size="9">IN2</text><rect x="70" y="205" width="60" height="15" fill="#bbb" rx="3"/></svg>`
-            },
-            8266: {
-                name: "NodeMCU 8266", 
-                pins: [
-                    {relay:"VCC (+)", pin:"VIN", note:"Nguồn"}, {relay:"GND (-)", pin:"GND", note:"Mát"},
-                    {relay:"IN 1", pin:"D1 (IO5)"}, {relay:"IN 2", pin:"D2 (IO4)"},
-                    {relay:"IN 3", pin:"D5 (IO14)"}, {relay:"IN 4", pin:"D6 (IO12)"}
-                ],
-                svg: `<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg"><rect x="50" y="10" width="100" height="190" rx="5" fill="#111" stroke="#333" stroke-width="2"/><circle cx="165" cy="50" r="8" fill="#00ff88"/><text x="175" y="54" fill="#00ff88" font-size="10">D1</text><text x="135" y="54" fill="#fff" font-size="9" text-anchor="end">IN1</text><circle cx="165" cy="70" r="8" fill="#00ff88"/><text x="175" y="74" fill="#00ff88" font-size="10">D2</text><text x="135" y="74" fill="#fff" font-size="9" text-anchor="end">IN2</text><rect x="75" y="195" width="50" height="15" fill="#aaa"/></svg>`
-            },
-            esp32: {
-                name: "ESP32 Thường", 
-                pins: [
-                    {relay:"VCC (+)", pin:"VIN", note:"Nguồn"}, {relay:"GND (-)", pin:"GND", note:"Mát"},
-                    {relay:"IN 1", pin:"D13"}, {relay:"IN 2", pin:"D12"},
-                    {relay:"IN 3", pin:"D14"}, {relay:"IN 4", pin:"D27"}
-                ],
-                svg: `<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg"><rect x="40" y="10" width="120" height="200" rx="2" fill="#222" stroke="#555" stroke-width="2"/><circle cx="25" cy="70" r="8" fill="#00ff88"/><text x="0" y="74" fill="#00ff88" font-size="10">13</text><text x="45" y="74" fill="#fff" font-size="9">IN1</text><circle cx="25" cy="90" r="8" fill="#00ff88"/><text x="0" y="94" fill="#00ff88" font-size="10">12</text><text x="45" y="94" fill="#fff" font-size="9">IN2</text><rect x="80" y="205" width="40" height="15" fill="#aaa"/></svg>`
+    <div class="box">
+        <h2>SƠ ĐỒ ĐẤU NỐI</h2>
+        <div id="diagram" style="text-align: center; margin: 20px 0;">
+            </div>
+        <div class="pin-map" id="pinText"></div>
+    </div>
+</div>
+
+<script>
+    const maps = {
+        c3: {name:"ESP32-C3", pins:"CH1:G0, CH2:G1, CH3:G2, CH4:G3, CH5:G4...", svg:`<svg viewBox="0 0 100 120" width="150"><rect width="100" height="120" fill="#333" rx="5"/><text x="50" y="60" fill="#666" text-anchor="middle">C3 MINI</text><circle cx="85" cy="20" r="5" fill="#0f0"/><text x="70" y="24" fill="#fff" font-size="10">G0</text></svg>`},
+        s3: {name:"ESP32-S3", pins:"CH1:G4, CH2:G5, CH3:G6, CH4:G7...", svg:`<svg viewBox="0 0 100 120" width="150"><rect width="100" height="120" fill="#333" rx="5"/><text x="50" y="60" fill="#666" text-anchor="middle">S3 DEVKIT</text><circle cx="15" cy="30" r="5" fill="#0f0"/><text x="25" y="34" fill="#fff" font-size="10">G4</text></svg>`},
+        8266: {name:"NodeMCU", pins:"CH1:D1, CH2:D2, CH3:D5, CH4:D6...", svg:`<svg viewBox="0 0 100 120" width="150"><rect width="100" height="120" fill="#333" rx="5"/><text x="50" y="60" fill="#666" text-anchor="middle">ESP8266</text><circle cx="85" cy="30" r="5" fill="#0f0"/><text x="70" y="34" fill="#fff" font-size="10">D1</text></svg>`},
+        esp32: {name:"ESP32", pins:"CH1:G13, CH2:G12, CH3:G14, CH4:G27...", svg:`<svg viewBox="0 0 100 120" width="150"><rect width="100" height="120" fill="#333" rx="5"/><text x="50" y="60" fill="#666" text-anchor="middle">ESP32</text><circle cx="15" cy="40" r="5" fill="#0f0"/><text x="25" y="44" fill="#fff" font-size="10">G13</text></svg>`}
+    };
+
+    function updateMap() {
+        const type = document.getElementById('chip').value;
+        document.getElementById('pinText').innerHTML = "<b>Chân Tín Hiệu:</b><br>" + maps[type].pins;
+        document.getElementById('diagram').innerHTML = maps[type].svg;
+    }
+    updateMap();
+
+    function log(msg, color="#ccc") {
+        const d = document.getElementById('log');
+        d.innerHTML += `<div style="color:${color}">> ${msg}</div>`;
+        d.scrollTop = d.scrollHeight;
+    }
+
+    async function startConfig() {
+        const token = document.getElementById('token').value.trim();
+        const name = document.getElementById('name').value.trim();
+        const room = document.getElementById('room').value.trim();
+        const ch = document.getElementById('ch').value;
+
+        if (!token) return alert("Chưa nhập Token!");
+
+        try {
+            const port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+            log("Đã kết nối USB.", "#00e676");
+
+            const writer = port.writable.getWriter();
+            const cmd = `SET_CONFIG:${token},${name},${room},${ch}\n`;
+            log("Đang gửi lệnh: " + cmd);
+            await writer.write(new TextEncoder().encode(cmd));
+            writer.releaseLock();
+
+            log("Đang đợi chip phản hồi...", "#fff");
+            
+            // Đọc phản hồi
+            const reader = port.readable.getReader();
+            const decoder = new TextDecoder();
+            let done = false;
+
+            while (!done) {
+                const { value, done: readerDone } = await reader.read();
+                if (readerDone) break;
+                const text = decoder.decode(value);
+                if (text.includes("CONF_OK")) {
+                    log("✅ CẤU HÌNH THÀNH CÔNG!", "#00e676");
+                    alert("Thành công! Chip đang khởi động lại.");
+                    done = true;
+                }
             }
-        };
+            reader.releaseLock();
+            await port.close();
 
-        function updateDiagram() {
-            const type = document.getElementById('chipType').value;
-            const data = pinouts[type];
-            document.getElementById('chipLabel').innerText = data.name;
-            document.getElementById('svgContainer').innerHTML = data.svg;
-            const table = document.getElementById('pinList');
-            table.innerHTML = "";
-            data.pins.forEach(p => {
-                let color = p.note === "Nguồn" ? "#ff4444" : (p.note === "Mát" ? "#888" : "#00ff88");
-                table.innerHTML += `<tr>
-                    <td class="relay-pin" style="color:${color}">${p.relay}</td>
-                    <td class="chip-pin">${p.pin}</td>
-                </tr>`;
-            });
+        } catch (err) {
+            log("Lỗi: " + err, "red");
         }
+    }
+</script>
 
-        function log(m, type="info") { const el=document.getElementById('log'); el.style.display='block'; el.innerHTML+=`<div class="${type}">> ${m}</div>`; el.scrollTop=el.scrollHeight; }
-        function extractToken(input) { if(input.includes("token=")) return input.split("token=")[1]; return input; }
-        
-        async function run() {
-            const btn = document.getElementById('btn');
-            const token = extractToken(document.getElementById('token').value.trim());
-            const name = document.getElementById('name').value.trim();
-            const room = document.getElementById('room').value;
-            const ch = document.getElementById('channels').value;
-            if(!token) return alert("Vui lòng nhập Token!");
-            document.getElementById('log').innerHTML = "";
-
-            let port;
-            try {
-                port = await navigator.serial.requestPort(); 
-                await port.open({baudRate:115200});
-                log("✅ Đã kết nối USB.", "success"); btn.disabled=true;
-                
-                log(`⏳ Đang cấu hình Cloud (${ch} kênh)...`, "info");
-                await regCloud(token, name, room, ch); 
-                log("✅ Cloud OK.", "success");
-
-                log("⏳ Đang ghi vào Chip...", "info");
-                const w = port.writable.getWriter();
-                await w.write(new TextEncoder().encode(`SET_CONFIG:${token},${name},${room},${ch}\n`));
-                w.releaseLock();
-
-                log("⏳ Chờ chip báo 'CONF_OK'...", "info");
-                const r = port.readable.getReader();
-                // Tăng thời gian chờ lên 8 giây cho chắc chắn
-                const to = setTimeout(()=>{r.cancel(); log("⚠️ Chip không phản hồi (Thử nhấn Reset trên mạch)", "warn");}, 8000);
-                
-                try {
-                    while(true) { 
-                        const {value, done} = await r.read(); 
-                        if(done || new TextDecoder().decode(value).includes("CONF_OK")) { 
-                            clearTimeout(to); break; 
-                        } 
-                    }
-                    log("🎉 CÀI ĐẶT THÀNH CÔNG!", "success"); 
-                    log("🔊 Chip đã nhận lệnh và đang khởi động lại.", "info");
-                    alert("Thành công 100%!");
-                } catch(e){}
-                r.releaseLock(); await port.close();
-            } catch(e) { log("❌ Lỗi: "+e.message, "error"); }
-            finally { if(port && !port.locked) await port.close(); btn.disabled=false; }
-        }
-
-        function regCloud(t, d, r, ch) {
-            return new Promise((resolve, reject) => {
-                const ws = new WebSocket(`wss://api.xiaozhi.me/mcp/?token=${t}`); let ok=false;
-                ws.onmessage = (e) => {
-                    try{
-                        const j=JSON.parse(e.data);
-                        if(j.method=="initialize") ws.send(JSON.stringify({jsonrpc:"2.0",id:j.id,result:{protocolVersion:"2024-11-05",serverInfo:{name:`[${r}] ${d} (${ch}CH)`,version:"1.0"}}}));
-                        if(j.method=="tools/list") {
-                            ws.send(JSON.stringify({jsonrpc:"2.0",id:j.id,result:{tools:[{name:"control_relay",description:`Dieu khien ${ch} kenh tai ${r}`,inputSchema:{type:"object",properties:{id:{type:"integer"},on:{type:"boolean"}}}}]}}));
-                            ok=true; setTimeout(()=>{ws.close();resolve()},500);
-                        }
-                    }catch(err){}
-                };
-                ws.onerror=()=>!ok&&reject(new Error("Token lỗi")); setTimeout(()=>!ok&&reject(new Error("Timeout")),5000);
-            });
-        }
-    </script>
 </body>
 </html>

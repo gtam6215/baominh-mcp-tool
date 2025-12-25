@@ -1,141 +1,185 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bao Minh Factory Setup</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f0f12; color: #eee; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; width: 100%; max-width: 900px; }
-        .box { background: #1e1e24; padding: 25px; border-radius: 12px; flex: 1; min-width: 300px; border: 1px solid #333; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
-        h2 { color: #00e676; text-align: center; margin-top: 0; }
-        label { font-size: 13px; color: #aaa; margin-top: 10px; display: block; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; background: #2b2b36; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; outline: none; }
-        input:focus { border-color: #00e676; background: #333; }
-        button { background: #00e676; color: #000; width: 100%; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; font-size: 16px; margin-top: 20px; transition: 0.2s; }
-        button:hover { background: #00c853; }
-        button:disabled { background: #555; cursor: not-allowed; }
-        #log { margin-top: 15px; font-family: monospace; font-size: 12px; color: #888; white-space: pre-wrap; }
-        .pin-map { font-size: 12px; color: #ccc; margin-top: 10px; line-height: 1.6; border-top: 1px solid #444; padding-top: 10px; }
-    </style>
-</head>
-<body>
+#include <Arduino.h>
+#include <WiFiManager.h>      
+#include <ArduinoJson.h>
+#include <WebSocketMCP.h>
 
-<div class="container">
-    <div class="box">
-        <h2>CẤU HÌNH THIẾT BỊ</h2>
-        <label>Token Xiaozhi:</label>
-        <input type="text" id="token" placeholder="Dán mã Token (ey...) vào đây">
-        
-        <div style="display: flex; gap: 10px;">
-            <div style="flex:1">
-                <label>Tên Gốc (Prefix):</label>
-                <input type="text" id="name" value="Đèn" placeholder="VD: Đèn">
-            </div>
-            <div style="flex:1">
-                <label>Phòng/Vị Trí:</label>
-                <input type="text" id="room" value="Phòng Khách">
-            </div>
-        </div>
+// --- 1. CẤU HÌNH PHẦN CỨNG ---
+#if defined(ESP8266)
+  #include <ESP8266WiFi.h>
+  #include <LittleFS.h>
+  #define FS_SYSTEM LittleFS
+  const int PINS[] = {5, 4, 14, 12, 13, 16, 0, 2}; 
+  #define CHIP_NAME "ESP8266"
+#else
+  #include <WiFi.h>
+  #include <LittleFS.h>
+  #define FS_SYSTEM LittleFS
+  #if defined(ARDUINO_ESP32C3_DEV) || defined(ARDUINO_ESP32C3_SUPERMINI)
+    const int PINS[] = {0, 1, 2, 3, 4, 5, 6, 7};
+    #define CHIP_NAME "ESP32-C3"
+  #else
+    const int PINS[] = {13, 12, 14, 27, 26, 25, 33, 32};
+    #define CHIP_NAME "ESP32-Std"
+  #endif
+#endif
 
-        <div style="display: flex; gap: 10px;">
-            <div style="flex:1">
-                <label>Loại Chip:</label>
-                <select id="chip" onchange="updateMap()">
-                    <option value="c3">C3 SuperMini</option>
-                    <option value="s3">ESP32-S3</option>
-                    <option value="8266">ESP8266</option>
-                    <option value="esp32">ESP32 Thường</option>
-                </select>
-            </div>
-            <div style="flex:1">
-                <label>Số Kênh:</label>
-                <select id="ch">
-                    <option value="1">1 Kênh</option>
-                    <option value="2">2 Kênh</option>
-                    <option value="4" selected>4 Kênh</option>
-                    <option value="8">8 Kênh</option>
-                </select>
-            </div>
-        </div>
+// --- 2. BIẾN HỆ THỐNG ---
+char mcp_token[512] = ""; 
+char num_ch[4] = "8"; 
+char names[8][32]; 
+char rooms[8][32]; 
+char labels_n[8][40]; char labels_r[8][40];
+bool shouldSaveConfig = false;
 
-        <button id="btn" onclick="startConfig()">KẾT NỐI USB & CẤU HÌNH</button>
-        <div id="log"></div>
-    </div>
+WiFiManager wm;
+WebSocketMCP mcpClient;
 
-    <div class="box">
-        <h2>SƠ ĐỒ ĐẤU NỐI</h2>
-        <div id="diagram" style="text-align: center; margin: 20px 0;">
-            </div>
-        <div class="pin-map" id="pinText"></div>
-    </div>
-</div>
+// JavaScript ẩn hiện ô nhập liệu trên điện thoại khách hàng
+const char* script_js = "<script>"
+"function updateCH(){var c=parseInt(document.getElementById('ch').value)||0;"
+"for(var i=0;i<8;i++){var n=document.getElementById('n'+i).parentNode,r=document.getElementById('r'+i).parentNode;"
+"if(i<c){n.style.display='block';r.style.display='block';}else{n.style.display='none';r.style.display='none';}}}"
+"setTimeout(function(){var i=document.getElementById('ch');i.oninput=updateCH;updateCH();},500);</script>";
 
-<script>
-    const maps = {
-        c3: {name:"ESP32-C3", pins:"CH1:G0, CH2:G1, CH3:G2, CH4:G3, CH5:G4...", svg:`<svg viewBox="0 0 100 120" width="150"><rect width="100" height="120" fill="#333" rx="5"/><text x="50" y="60" fill="#666" text-anchor="middle">C3 MINI</text><circle cx="85" cy="20" r="5" fill="#0f0"/><text x="70" y="24" fill="#fff" font-size="10">G0</text></svg>`},
-        s3: {name:"ESP32-S3", pins:"CH1:G4, CH2:G5, CH3:G6, CH4:G7...", svg:`<svg viewBox="0 0 100 120" width="150"><rect width="100" height="120" fill="#333" rx="5"/><text x="50" y="60" fill="#666" text-anchor="middle">S3 DEVKIT</text><circle cx="15" cy="30" r="5" fill="#0f0"/><text x="25" y="34" fill="#fff" font-size="10">G4</text></svg>`},
-        8266: {name:"NodeMCU", pins:"CH1:D1, CH2:D2, CH3:D5, CH4:D6...", svg:`<svg viewBox="0 0 100 120" width="150"><rect width="100" height="120" fill="#333" rx="5"/><text x="50" y="60" fill="#666" text-anchor="middle">ESP8266</text><circle cx="85" cy="30" r="5" fill="#0f0"/><text x="70" y="34" fill="#fff" font-size="10">D1</text></svg>`},
-        esp32: {name:"ESP32", pins:"CH1:G13, CH2:G12, CH3:G14, CH4:G27...", svg:`<svg viewBox="0 0 100 120" width="150"><rect width="100" height="120" fill="#333" rx="5"/><text x="50" y="60" fill="#666" text-anchor="middle">ESP32</text><circle cx="15" cy="40" r="5" fill="#0f0"/><text x="25" y="44" fill="#fff" font-size="10">G13</text></svg>`}
-    };
+// --- 3. HÀM XỬ LÝ ---
+WebSocketMCP::ToolResponse handleControl(const String& payload, int pin) {
+    JsonDocument doc; deserializeJson(doc, payload);
+    String state = doc["state"] | "off";
+    digitalWrite(pin, (state == "on") ? LOW : HIGH);
+    return WebSocketMCP::ToolResponse("{\"success\":true}");
+}
 
-    function updateMap() {
-        const type = document.getElementById('chip').value;
-        document.getElementById('pinText').innerHTML = "<b>Chân Tín Hiệu:</b><br>" + maps[type].pins;
-        document.getElementById('diagram').innerHTML = maps[type].svg;
-    }
-    updateMap();
+void saveConfigFile() {
+    JsonDocument doc;
+    doc["t"] = mcp_token; doc["c"] = num_ch;
+    JsonArray nArr = doc.createNestedArray("n");
+    JsonArray rArr = doc.createNestedArray("r");
+    for(int i=0; i<8; i++) { nArr.add(names[i]); rArr.add(rooms[i]); }
+    File f = FS_SYSTEM.open("/config.json", "w");
+    if (f) { serializeJson(doc, f); f.close(); Serial.println("✅ Config Saved"); }
+}
 
-    function log(msg, color="#ccc") {
-        const d = document.getElementById('log');
-        d.innerHTML += `<div style="color:${color}">> ${msg}</div>`;
-        d.scrollTop = d.scrollHeight;
-    }
-
-    async function startConfig() {
-        const token = document.getElementById('token').value.trim();
-        const name = document.getElementById('name').value.trim();
-        const room = document.getElementById('room').value.trim();
-        const ch = document.getElementById('ch').value;
-
-        if (!token) return alert("Chưa nhập Token!");
-
-        try {
-            const port = await navigator.serial.requestPort();
-            await port.open({ baudRate: 115200 });
-            log("Đã kết nối USB.", "#00e676");
-
-            const writer = port.writable.getWriter();
-            const cmd = `SET_CONFIG:${token},${name},${room},${ch}\n`;
-            log("Đang gửi lệnh: " + cmd);
-            await writer.write(new TextEncoder().encode(cmd));
-            writer.releaseLock();
-
-            log("Đang đợi chip phản hồi...", "#fff");
-            
-            // Đọc phản hồi
-            const reader = port.readable.getReader();
-            const decoder = new TextDecoder();
-            let done = false;
-
-            while (!done) {
-                const { value, done: readerDone } = await reader.read();
-                if (readerDone) break;
-                const text = decoder.decode(value);
-                if (text.includes("CONF_OK")) {
-                    log("✅ CẤU HÌNH THÀNH CÔNG!", "#00e676");
-                    alert("Thành công! Chip đang khởi động lại.");
-                    done = true;
-                }
+void loadConfigFile() {
+    if (FS_SYSTEM.begin(true)) {
+        if (FS_SYSTEM.exists("/config.json")) {
+            File f = FS_SYSTEM.open("/config.json", "r");
+            JsonDocument doc; deserializeJson(doc, f);
+            strcpy(mcp_token, doc["t"] | "");
+            strcpy(num_ch, doc["c"] | "2");
+            for(int i=0; i<8; i++) {
+                strcpy(names[i], doc["n"][i] | "ThietBi");
+                strcpy(rooms[i], doc["r"][i] | "Phong");
             }
-            reader.releaseLock();
-            await port.close();
-
-        } catch (err) {
-            log("Lỗi: " + err, "red");
+            f.close();
         }
     }
-</script>
+}
 
-</body>
-</html>
+// --- 4. HÀM QUAN TRỌNG: NHẬN CẤU HÌNH TỪ SETUP.HTML ---
+void checkSerialConfig() {
+    if (Serial.available()) {
+        String input = Serial.readStringUntil('\n');
+        input.trim();
+        
+        // Setup.html gửi lệnh dạng: SET_CONFIG:token,name,room,channels
+        if (input.startsWith("SET_CONFIG:")) {
+            input.remove(0, 11); // Xóa chữ SET_CONFIG:
+            
+            // Tách các phần tử bằng dấu phẩy
+            int first = input.indexOf(',');
+            int second = input.indexOf(',', first + 1);
+            int third = input.indexOf(',', second + 1);
+
+            if (third != -1) {
+                String t = input.substring(0, first);
+                String n = input.substring(first + 1, second);
+                String r = input.substring(second + 1, third);
+                String c = input.substring(third + 1);
+
+                // Xử lý Token (Nếu dán cả link wss:// thì chỉ lấy phần token)
+                if (t.indexOf("token=") != -1) {
+                    t = t.substring(t.indexOf("token=") + 6);
+                }
+                strcpy(mcp_token, t.c_str());
+                strcpy(num_ch, c.c_str());
+                
+                // Tự động đặt tên: "Đèn" -> "Đèn 1", "Đèn 2"...
+                int active = atoi(num_ch);
+                for(int i=0; i<8; i++) {
+                    if (i < active) {
+                        String finalName = n + " " + String(i + 1);
+                        strcpy(names[i], finalName.c_str());
+                        strcpy(rooms[i], r.c_str());
+                    } else {
+                        strcpy(names[i], "Unused"); // Xóa tên các kênh không dùng
+                        strcpy(rooms[i], "None");
+                    }
+                }
+                
+                saveConfigFile();
+                Serial.println("CONF_OK"); // <--- TRẢ LỜI ĐỂ SETUP.HTML BIẾT ĐÃ XONG
+                delay(1000);
+                ESP.restart();
+            }
+        }
+    }
+}
+
+void setup() {
+    Serial.begin(115200); // Tốc độ này phải khớp với setup.html
+    loadConfigFile();
+    for(int i=0; i<8; i++) { pinMode(PINS[i], OUTPUT); digitalWrite(PINS[i], HIGH); }
+
+    // Cấu hình giao diện WiFiManager cho khách hàng
+    String head = "<div style='background:#e3f2fd;padding:10px;border-radius:8px;font-size:13px;'><b>" + String(CHIP_NAME) + "</b></div>" + String(script_js);
+    WiFiManagerParameter custom_html(head.c_str()); wm.addParameter(&custom_html);
+    WiFiManagerParameter p_mcp("mcp", "Token", mcp_token, 512);
+    WiFiManagerParameter p_ch("ch", "Số kênh (1-8)", num_ch, 4);
+    wm.addParameter(&p_mcp); wm.addParameter(&p_ch);
+
+    WiFiManagerParameter* p_n[8]; WiFiManagerParameter* p_r[8];
+    for(int i=0; i<8; i++) {
+        char idn[10], idr[10]; sprintf(idn, "n%d", i); sprintf(idr, "r%d", i);
+        sprintf(labels_n[i], "Tên Kênh %d", i+1); sprintf(labels_r[i], "Phòng Kênh %d", i+1);
+        p_n[i] = new WiFiManagerParameter(idn, labels_n[i], names[i], 32);
+        p_r[i] = new WiFiManagerParameter(idr, labels_r[i], rooms[i], 32);
+        wm.addParameter(p_n[i]); wm.addParameter(p_r[i]);
+    }
+
+    wm.setSaveConfigCallback([](){ shouldSaveConfig = true; });
+    
+    // Timeout 3 phút cho Portal để khách hàng nhập WiFi
+    wm.setConfigPortalTimeout(180); 
+    
+    if (!wm.autoConnect("Xiaozhi_Device")) {
+        Serial.println("Chưa kết nối WiFi, đang chạy chế độ Offline...");
+    }
+
+    if (shouldSaveConfig) {
+        strcpy(mcp_token, p_mcp.getValue());
+        strcpy(num_ch, p_ch.getValue());
+        for(int i=0; i<8; i++) { strcpy(names[i], p_n[i]->getValue()); strcpy(rooms[i], p_r[i]->getValue()); }
+        saveConfigFile();
+        delay(1000); ESP.restart(); 
+    }
+
+    // Kết nối WebSocket nếu có Token
+    if (strlen(mcp_token) > 10) {
+        String t = String(mcp_token); t.trim();
+        String url = (t.indexOf('=') != -1) ? t : ("wss://api.xiaozhi.me/mcp/?token=" + t);
+        mcpClient.begin(url.c_str());
+        int active = atoi(num_ch);
+        for (int i = 0; i < active; i++) {
+            String toolId = "ch" + String(i+1);
+            String desc = "Bật/Tắt " + String(names[i]) + " tại " + String(rooms[i]);
+            mcpClient.registerTool(toolId, desc.c_str(), R"({"type":"object","properties":{"state":{"type":"string","enum":["on","off"]}},"required":["state"]})", 
+            [i](const String& p){ return handleControl(p, PINS[i]); });
+        }
+    }
+}
+
+void loop() { 
+    mcpClient.loop();
+    checkSerialConfig(); // <--- ĐÂY LÀ HÀM QUAN TRỌNG ĐỂ SETUP.HTML HOẠT ĐỘNG
+    delay(1); 
+}

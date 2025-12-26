@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảo Minh Setup Tool V4.0</title>
+    <title>Bảo Minh Setup Pro V4.1</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
         .box { background: #1a1a1a; padding: 30px; border-radius: 12px; width: 100%; max-width: 450px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -13,9 +13,8 @@
         .btn-group { display: flex; gap: 10px; margin-top: 25px; }
         button { flex: 1; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; transition: 0.2s; }
         .btn-save { background: #00e676; color: #000; }
-        .btn-save:hover { background: #00c853; }
         .btn-reset { background: #e74c3c; color: #fff; }
-        .btn-reset:hover { background: #c0392b; }
+        .btn-test { background: #3498db; color: #fff; }
         #log { margin-top: 20px; font-family: monospace; font-size: 12px; color: #888; white-space: pre-wrap; height: 120px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; border: 1px solid #333; }
     </style>
 </head>
@@ -23,7 +22,7 @@
 
 <div class="box">
     <h2>BẢO MINH SETUP PRO</h2>
-    <div style="text-align:center; color:#555; font-size:11px; margin-bottom:15px;">Phiên bản V9.6 - Sync Fix</div>
+    <div style="text-align:center; color:#555; font-size:11px; margin-bottom:15px;">V4.1 - Physical Feedback</div>
 
     <label>Token Xiaozhi:</label>
     <input type="text" id="token" placeholder="Dán mã Token (ey...)">
@@ -47,9 +46,11 @@
         <option value="8">8 Kênh</option>
     </select>
 
+    <button onclick="sendTest()" class="btn-test" style="margin-top:15px; width:100%">🔊 TEST KẾT NỐI (KÊU TẠCH)</button>
+
     <div class="btn-group">
-        <button class="btn-reset" onclick="sendReset()" id="btnReset">🧹 FORMAT CHIP</button>
-        <button class="btn-save" onclick="sendConfig()" id="btnSave">💾 CẤU HÌNH & LƯU</button>
+        <button class="btn-reset" onclick="sendReset()" id="btnReset">🧹 FORMAT</button>
+        <button class="btn-save" onclick="sendConfig()" id="btnSave">💾 CẤU HÌNH</button>
     </div>
     
     <div id="log">Chưa kết nối USB...</div>
@@ -72,6 +73,8 @@
                 await port.open({ baudRate: 115200 });
                 writer = port.writable.getWriter();
                 log("Đã kết nối USB.", "#00e676");
+                // Đọc phản hồi
+                readLoop();
                 return true;
             } catch (err) {
                 log("Lỗi kết nối: " + err, "red");
@@ -81,14 +84,45 @@
         return true;
     }
 
+    async function readLoop() {
+        const reader = port.readable.getReader();
+        const decoder = new TextDecoder();
+        try {
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                const text = decoder.decode(value);
+                if (text.includes("CONF_OK")) {
+                    log("✅ THÀNH CÔNG! (Chip đã lưu)", "#00ff00");
+                    alert("Cấu hình thành công! Nghe tiếng tạch dài là OK.");
+                }
+                if (text.includes("TEST_OK")) {
+                    log("✅ KẾT NỐI TỐT! (Đã nghe tiếng tạch)", "#3498db");
+                }
+                if (text.includes("RESET_OK")) {
+                    log("✅ ĐÃ FORMAT XONG!", "orange");
+                    alert("Đã xóa sạch chip. Giờ hãy nạp cấu hình.");
+                }
+                // log("Chip: " + text); // Debug raw
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            reader.releaseLock();
+        }
+    }
+
+    async function sendTest() {
+        if (!await connect()) return;
+        log("Gửi lệnh Test...", "#fff");
+        await writer.write(new TextEncoder().encode("CMD:TEST\n"));
+    }
+
     async function sendReset() {
         if (!await connect()) return;
-        if (!confirm("Bạn có chắc muốn xóa sạch toàn bộ dữ liệu trong Chip?")) return;
-        
-        log("Đang gửi lệnh RESET...", "orange");
+        if (!confirm("Xóa sạch chip?")) return;
+        log("Gửi lệnh Format...", "orange");
         await writer.write(new TextEncoder().encode("CMD:RESET\n"));
-        log("Đã gửi lệnh. Đợi chip phản hồi...", "#fff");
-        alert("Đã gửi lệnh Reset! Hãy đợi 3 giây rồi nạp cấu hình mới.");
     }
 
     async function sendConfig() {
@@ -103,8 +137,6 @@
         const cmd = `SET_CONFIG:${token},${name},${room},${ch}\n`;
         log("Đang gửi cấu hình...", "#fff");
         await writer.write(new TextEncoder().encode(cmd));
-        
-        log("✅ Đã gửi xong! Rút chip ra được rồi.", "#00ff00");
     }
 </script>
 </body>

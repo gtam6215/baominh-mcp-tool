@@ -3,115 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tool Cấu Hình Sản Xuất V8.6</title>
+    <title>Bảo Minh Setup Tool V4.0</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .box { background: #1e1e1e; padding: 30px; border-radius: 12px; width: 100%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #333; }
-        h2 { color: #00e676; margin-top: 0; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .box { background: #1a1a1a; padding: 30px; border-radius: 12px; width: 100%; max-width: 450px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { color: #00e676; text-align: center; margin-top: 0; }
         label { font-size: 13px; color: #aaa; margin-top: 15px; display: block; }
         input, select { width: 100%; padding: 12px; margin-top: 5px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; }
-        input:focus { border-color: #00e676; outline: none; }
-        button { background: #00e676; color: #000; width: 100%; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; font-size: 16px; margin-top: 25px; transition: 0.3s; }
-        button:hover { background: #00c853; }
-        #log { margin-top: 20px; font-family: monospace; font-size: 12px; color: #888; white-space: pre-wrap; height: 100px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 25px; }
+        button { flex: 1; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; transition: 0.2s; }
+        .btn-save { background: #00e676; color: #000; }
+        .btn-save:hover { background: #00c853; }
+        .btn-reset { background: #e74c3c; color: #fff; }
+        .btn-reset:hover { background: #c0392b; }
+        #log { margin-top: 20px; font-family: monospace; font-size: 12px; color: #888; white-space: pre-wrap; height: 120px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
-    <div class="box">
-        <h2>CẤU HÌNH THIẾT BỊ (FACTORY)</h2>
-        
-        <label>Token Xiaozhi:</label>
-        <input type="text" id="token" placeholder="Dán mã Token (ey...)">
-        
-        <div style="display: flex; gap: 10px;">
-            <div style="flex:1">
-                <label>Tên Gốc (VD: Đèn):</label>
-                <input type="text" id="name" value="Đèn">
-            </div>
-            <div style="flex:1">
-                <label>Vị Trí (Phòng):</label>
-                <input type="text" id="room" value="Phòng Khách">
-            </div>
+<div class="box">
+    <h2>BẢO MINH SETUP PRO</h2>
+    <div style="text-align:center; color:#555; font-size:11px; margin-bottom:15px;">Phiên bản V9.6 - Sync Fix</div>
+
+    <label>Token Xiaozhi:</label>
+    <input type="text" id="token" placeholder="Dán mã Token (ey...)">
+    
+    <div style="display: flex; gap: 10px;">
+        <div style="flex:1">
+            <label>Tên Gốc:</label>
+            <input type="text" id="name" value="Đèn">
         </div>
-
-        <label>Số Kênh:</label>
-        <select id="ch">
-            <option value="1">1 Kênh</option>
-            <option value="2">2 Kênh</option>
-            <option value="4" selected>4 Kênh</option>
-            <option value="8">8 Kênh</option>
-        </select>
-
-        <button onclick="startConfig()" id="btn">KẾT NỐI USB & CẤU HÌNH</button>
-        <div id="log"></div>
+        <div style="flex:1">
+            <label>Vị Trí:</label>
+            <input type="text" id="room" value="Phòng Khách">
+        </div>
     </div>
 
-    <script>
-        function log(msg, color="#ccc") {
-            const d = document.getElementById('log');
-            d.innerHTML += `<div style="color:${color}">> ${msg}</div>`;
-            d.scrollTop = d.scrollHeight;
-        }
+    <label>Số Kênh:</label>
+    <select id="ch">
+        <option value="1">1 Kênh</option>
+        <option value="2">2 Kênh</option>
+        <option value="4" selected>4 Kênh</option>
+        <option value="8">8 Kênh</option>
+    </select>
 
-        async function startConfig() {
-            const token = document.getElementById('token').value.trim();
-            const name = document.getElementById('name').value.trim();
-            const room = document.getElementById('room').value.trim();
-            const ch = document.getElementById('ch').value;
-            const btn = document.getElementById('btn');
+    <div class="btn-group">
+        <button class="btn-reset" onclick="sendReset()" id="btnReset">🧹 FORMAT CHIP</button>
+        <button class="btn-save" onclick="sendConfig()" id="btnSave">💾 CẤU HÌNH & LƯU</button>
+    </div>
+    
+    <div id="log">Chưa kết nối USB...</div>
+</div>
 
-            if (!token) return alert("Chưa nhập Token!");
-            if (!navigator.serial) return alert("Trình duyệt này không hỗ trợ! Hãy dùng Chrome.");
+<script>
+    let port;
+    let writer;
+    
+    function log(msg, color="#ccc") {
+        const d = document.getElementById('log');
+        d.innerHTML += `<div style="color:${color}">> ${msg}</div>`;
+        d.scrollTop = d.scrollHeight;
+    }
 
+    async function connect() {
+        if (!port) {
             try {
-                const port = await navigator.serial.requestPort();
+                port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
+                writer = port.writable.getWriter();
                 log("Đã kết nối USB.", "#00e676");
-                btn.disabled = true;
-
-                const writer = port.writable.getWriter();
-                // Gửi lệnh cấu hình
-                const cmd = `SET_CONFIG:${token},${name},${room},${ch}\n`;
-                log("Đang gửi lệnh...", "#fff");
-                await writer.write(new TextEncoder().encode(cmd));
-                writer.releaseLock();
-
-                // Đọc phản hồi
-                const reader = port.readable.getReader();
-                const decoder = new TextDecoder();
-                let buffer = "";
-                let done = false;
-                
-                // Hẹn giờ 5 giây nếu không thấy chip trả lời
-                const timeout = setTimeout(() => {
-                    log("⚠️ Không thấy chip trả lời 'CONF_OK'. Hãy thử Reset chip.", "orange");
-                    if (!done) { reader.cancel(); done = true; btn.disabled = false; }
-                }, 5000);
-
-                while (!done) {
-                    const { value, done: readerDone } = await reader.read();
-                    if (readerDone) break;
-                    buffer += decoder.decode(value);
-                    
-                    if (buffer.includes("CONF_OK")) {
-                        clearTimeout(timeout);
-                        log("✅ CẤU HÌNH THÀNH CÔNG!", "#00ff00");
-                        alert("Thành công! Chip đang khởi động lại.");
-                        done = true;
-                        reader.cancel();
-                    }
-                }
-                
-                reader.releaseLock();
-                await port.close();
-
+                return true;
             } catch (err) {
-                log("Lỗi: " + err, "red");
-            } finally {
-                btn.disabled = false;
+                log("Lỗi kết nối: " + err, "red");
+                return false;
             }
         }
-    </script>
+        return true;
+    }
+
+    async function sendReset() {
+        if (!await connect()) return;
+        if (!confirm("Bạn có chắc muốn xóa sạch toàn bộ dữ liệu trong Chip?")) return;
+        
+        log("Đang gửi lệnh RESET...", "orange");
+        await writer.write(new TextEncoder().encode("CMD:RESET\n"));
+        log("Đã gửi lệnh. Đợi chip phản hồi...", "#fff");
+        alert("Đã gửi lệnh Reset! Hãy đợi 3 giây rồi nạp cấu hình mới.");
+    }
+
+    async function sendConfig() {
+        const token = document.getElementById('token').value.trim();
+        const name = document.getElementById('name').value.trim();
+        const room = document.getElementById('room').value.trim();
+        const ch = document.getElementById('ch').value;
+
+        if (!token) return alert("Thiếu Token!");
+        if (!await connect()) return;
+
+        const cmd = `SET_CONFIG:${token},${name},${room},${ch}\n`;
+        log("Đang gửi cấu hình...", "#fff");
+        await writer.write(new TextEncoder().encode(cmd));
+        
+        log("✅ Đã gửi xong! Rút chip ra được rồi.", "#00ff00");
+    }
+</script>
 </body>
 </html>

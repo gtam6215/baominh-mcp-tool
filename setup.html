@@ -3,60 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảo Minh Setup Pro V4.1</title>
+    <title>Bảo Minh Setup Tool V4.2 - Pro Dashboard</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .box { background: #1a1a1a; padding: 30px; border-radius: 12px; width: 100%; max-width: 450px; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h2 { color: #00e676; text-align: center; margin-top: 0; }
-        label { font-size: 13px; color: #aaa; margin-top: 15px; display: block; }
-        input, select { width: 100%; padding: 12px; margin-top: 5px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; }
-        .btn-group { display: flex; gap: 10px; margin-top: 25px; }
-        button { flex: 1; padding: 15px; font-weight: bold; cursor: pointer; border: none; border-radius: 8px; transition: 0.2s; }
-        .btn-save { background: #00e676; color: #000; }
-        .btn-reset { background: #e74c3c; color: #fff; }
-        .btn-test { background: #3498db; color: #fff; }
-        #log { margin-top: 20px; font-family: monospace; font-size: 12px; color: #888; white-space: pre-wrap; height: 120px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; border: 1px solid #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; box-sizing: border-box;}
+        
+        /* Layout Grid */
+        .container { display: flex; gap: 20px; width: 100%; max-width: 1200px; flex-wrap: wrap; align-items: flex-start; }
+        .col { flex: 1; min-width: 350px; display: flex; flex-direction: column; gap: 20px; }
+
+        /* Box Styles */
+        .box { background: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #333; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        .box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        h2, h3 { color: #00e676; margin: 0; font-size: 1.2rem; }
+        
+        /* Form Elements */
+        label { font-size: 13px; color: #aaa; margin-top: 10px; display: block; }
+        input, select { width: 100%; padding: 10px; margin-top: 5px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; }
+        input:focus, select:focus { border-color: #00e676; outline: none; }
+
+        /* Buttons */
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        button { flex: 1; padding: 12px; font-weight: bold; cursor: pointer; border: none; border-radius: 6px; transition: 0.2s; color: #fff; }
+        .btn-save { background: #00e676; color: #000; } .btn-save:hover { background: #00c853; }
+        .btn-reset { background: #e74c3c; } .btn-reset:hover { background: #c0392b; }
+        .btn-test { background: #3498db; margin-top: 15px; width: 100%; } .btn-test:hover { background: #2980b9; }
+        .btn-clear { background: #555; padding: 5px 10px; font-size: 12px; width: auto; flex: none; }
+
+        /* Log & Monitor */
+        .log-box { font-family: 'Consolas', monospace; font-size: 12px; color: #ccc; background: #000; padding: 10px; border-radius: 5px; border: 1px solid #333; overflow-y: auto; }
+        #log { height: 80px; white-space: pre-wrap; }
+        #monitor { height: 300px; color: #00ff00; }
+
+        /* Diagram */
+        #diagram-svg { width: 100%; height: auto; background: #fff; border-radius: 8px; padding: 10px; box-sizing: border-box; }
+        .pin-desc { font-size: 12px; color: #aaa; margin-top: 10px; line-height: 1.4; }
+        .highlight { color: #00e676; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <h2>BẢO MINH SETUP PRO</h2>
-    <div style="text-align:center; color:#555; font-size:11px; margin-bottom:15px;">V4.1 - Physical Feedback</div>
+<div class="container">
+    <div class="col">
+        <div class="box">
+            <div class="box-header">
+                <h2>CẤU HÌNH THIẾT BỊ</h2>
+                <span style="font-size:11px; color:#666">V4.2</span>
+            </div>
 
-    <label>Token Xiaozhi:</label>
-    <input type="text" id="token" placeholder="Dán mã Token (ey...)">
-    
-    <div style="display: flex; gap: 10px;">
-        <div style="flex:1">
-            <label>Tên Gốc:</label>
-            <input type="text" id="name" value="Đèn">
-        </div>
-        <div style="flex:1">
-            <label>Vị Trí:</label>
-            <input type="text" id="room" value="Phòng Khách">
+            <label>Token Xiaozhi:</label>
+            <input type="text" id="token" placeholder="Dán mã Token (ey...)">
+            
+            <div style="display: flex; gap: 10px;">
+                <div style="flex:1">
+                    <label>Tên Gốc:</label>
+                    <input type="text" id="name" value="Đèn">
+                </div>
+                <div style="flex:1">
+                    <label>Vị Trí:</label>
+                    <input type="text" id="room" value="Phòng Khách">
+                </div>
+            </div>
+
+            <label>Số Kênh:</label>
+            <select id="ch">
+                <option value="1">1 Kênh</option>
+                <option value="2">2 Kênh</option>
+                <option value="4" selected>4 Kênh</option>
+                <option value="8">8 Kênh</option>
+            </select>
+
+            <button onclick="sendTest()" class="btn-test">🔊 TEST KẾT NỐI (KÊU TẠCH)</button>
+
+            <div class="btn-group">
+                <button class="btn-reset" onclick="sendReset()" id="btnReset">🧹 FORMAT</button>
+                <button class="btn-save" onclick="sendConfig()" id="btnSave">💾 CẤU HÌNH</button>
+            </div>
+            
+            <label>Trạng thái:</label>
+            <div id="log" class="log-box">Chưa kết nối USB...</div>
         </div>
     </div>
 
-    <label>Số Kênh:</label>
-    <select id="ch">
-        <option value="1">1 Kênh</option>
-        <option value="2">2 Kênh</option>
-        <option value="4" selected>4 Kênh</option>
-        <option value="8">8 Kênh</option>
-    </select>
+    <div class="col">
+        <div class="box">
+            <div class="box-header">
+                <h3>SƠ ĐỒ ĐẤU NỐI</h3>
+                <select id="chip-type" onchange="updateDiagram()" style="width: 150px; margin:0; padding:5px;">
+                    <option value="c3">ESP32-C3 Mini</option>
+                    <option value="s3">ESP32-S3 Dev</option>
+                    <option value="esp8266">ESP8266 (NodeMCU)</option>
+                    <option value="esp32">ESP32 Standard</option>
+                </select>
+            </div>
+            <div id="diagram-container">
+                <div id="diagram-svg"></div>
+            </div>
+            <div id="pin-desc" class="pin-desc"></div>
+        </div>
 
-    <button onclick="sendTest()" class="btn-test" style="margin-top:15px; width:100%">🔊 TEST KẾT NỐI (KÊU TẠCH)</button>
-
-    <div class="btn-group">
-        <button class="btn-reset" onclick="sendReset()" id="btnReset">🧹 FORMAT</button>
-        <button class="btn-save" onclick="sendConfig()" id="btnSave">💾 CẤU HÌNH</button>
+        <div class="box">
+            <div class="box-header">
+                <h3>SERIAL MONITOR</h3>
+                <button class="btn-clear" onclick="clearMonitor()">Xóa</button>
+            </div>
+            <div id="monitor" class="log-box"></div>
+            <div style="margin-top:5px; font-size:11px; color:#666">
+                <input type="checkbox" id="autoscroll" checked style="width:auto; margin:0; vertical-align:middle"> 
+                Tự động cuộn xuống
+            </div>
+        </div>
     </div>
-    
-    <div id="log">Chưa kết nối USB...</div>
 </div>
 
 <script>
+    // --- PHẦN LOGIC CŨ (GIỮ NGUYÊN) ---
     let port;
     let writer;
     
@@ -64,6 +124,22 @@
         const d = document.getElementById('log');
         d.innerHTML += `<div style="color:${color}">> ${msg}</div>`;
         d.scrollTop = d.scrollHeight;
+    }
+
+    // Hàm Monitor mới
+    function logMonitor(text) {
+        const m = document.getElementById('monitor');
+        // Thay thế ký tự xuống dòng để hiển thị đẹp
+        const formatted = text.replace(/\n/g, '<br>');
+        m.innerHTML += formatted;
+        
+        if(document.getElementById('autoscroll').checked) {
+            m.scrollTop = m.scrollHeight;
+        }
+    }
+
+    function clearMonitor() {
+        document.getElementById('monitor').innerHTML = "";
     }
 
     async function connect() {
@@ -92,21 +168,26 @@
                 const { value, done } = await reader.read();
                 if (done) break;
                 const text = decoder.decode(value);
+                
+                // Đẩy dữ liệu thô vào Monitor
+                logMonitor(text);
+
+                // Logic phân tích phản hồi cũ
                 if (text.includes("CONF_OK")) {
                     log("✅ THÀNH CÔNG! (Chip đã lưu)", "#00ff00");
                     alert("Cấu hình thành công! Nghe tiếng tạch dài là OK.");
                 }
                 if (text.includes("TEST_OK")) {
-                    log("✅ KẾT NỐI TỐT! (Đã nghe tiếng tạch)", "#3498db");
+                    log("✅ KẾT NỐI TỐT!", "#3498db");
                 }
                 if (text.includes("RESET_OK")) {
                     log("✅ ĐÃ FORMAT XONG!", "orange");
                     alert("Đã xóa sạch chip. Giờ hãy nạp cấu hình.");
                 }
-                // log("Chip: " + text); // Debug raw
             }
         } catch (error) {
             console.error(error);
+            log("Lỗi đọc: " + error, "red");
         } finally {
             reader.releaseLock();
         }
@@ -138,6 +219,36 @@
         log("Đang gửi cấu hình...", "#fff");
         await writer.write(new TextEncoder().encode(cmd));
     }
+
+    // --- PHẦN LOGIC MỚI: VẼ SƠ ĐỒ ---
+    const diagrams = {
+        c3: {
+            svg: `<svg viewBox="0 0 200 120" style="width:100%"><rect x="10" y="10" width="60" height="80" fill="#333" rx="4"/><text x="40" y="55" fill="#fff" font-size="10" text-anchor="middle">ESP32-C3</text><rect x="130" y="10" width="60" height="80" fill="#2980b9" rx="4"/><text x="160" y="55" fill="#fff" font-size="10" text-anchor="middle">RELAY</text><line x1="70" y1="30" x2="130" y2="30" stroke="orange" stroke-width="2"/><text x="100" y="25" fill="#333" font-size="8" text-anchor="middle">GPIO</text><line x1="70" y1="70" x2="130" y2="70" stroke="black" stroke-width="2"/><text x="100" y="65" fill="#333" font-size="8" text-anchor="middle">GND</text></svg>`,
+            desc: "<span class='highlight'>CH1-CH4:</span> GPIO 0, 1, 2, 3<br><span class='highlight'>CH5-CH8:</span> GPIO 4, 5, 6, 7<br><i>*Chip nhỏ gọn, rất thông dụng.</i>"
+        },
+        s3: {
+            svg: `<svg viewBox="0 0 200 120" style="width:100%"><rect x="10" y="10" width="60" height="100" fill="#333" rx="4"/><text x="40" y="60" fill="#fff" font-size="10" text-anchor="middle">ESP32-S3</text><rect x="130" y="10" width="60" height="80" fill="#2980b9" rx="4"/><text x="160" y="55" fill="#fff" font-size="10" text-anchor="middle">RELAY</text><line x1="70" y1="30" x2="130" y2="30" stroke="orange" stroke-width="2"/><text x="100" y="25" fill="#333" font-size="8" text-anchor="middle">GPIO</text><line x1="70" y1="70" x2="130" y2="70" stroke="black" stroke-width="2"/><text x="100" y="65" fill="#333" font-size="8" text-anchor="middle">GND</text></svg>`,
+            desc: "<span class='highlight'>CH1-CH4:</span> GPIO 4, 5, 6, 7<br><span class='highlight'>CH5-CH8:</span> GPIO 15, 16, 17, 18<br><i>*Dòng chip mạnh mẽ cho AI.</i>"
+        },
+        esp8266: {
+            svg: `<svg viewBox="0 0 200 120" style="width:100%"><rect x="10" y="10" width="60" height="100" fill="#333" rx="4"/><text x="40" y="60" fill="#fff" font-size="10" text-anchor="middle">NodeMCU</text><rect x="130" y="10" width="60" height="80" fill="#2980b9" rx="4"/><text x="160" y="55" fill="#fff" font-size="10" text-anchor="middle">RELAY</text><line x1="70" y1="30" x2="130" y2="30" stroke="orange" stroke-width="2"/><text x="100" y="25" fill="#333" font-size="8" text-anchor="middle">D1/D2...</text><line x1="70" y1="70" x2="130" y2="70" stroke="black" stroke-width="2"/><text x="100" y="65" fill="#333" font-size="8" text-anchor="middle">GND</text></svg>`,
+            desc: "<span class='highlight'>CH1-CH4:</span> D1, D2, D5, D6<br><span class='highlight'>CH5-CH8:</span> D7, D0, D3, D4<br><i>*Chip giá rẻ, chân D có thể khác in trên board.</i>"
+        },
+        esp32: {
+            svg: `<svg viewBox="0 0 200 120" style="width:100%"><rect x="10" y="10" width="60" height="100" fill="#333" rx="4"/><text x="40" y="60" fill="#fff" font-size="10" text-anchor="middle">ESP32</text><rect x="130" y="10" width="60" height="80" fill="#2980b9" rx="4"/><text x="160" y="55" fill="#fff" font-size="10" text-anchor="middle">RELAY</text><line x1="70" y1="30" x2="130" y2="30" stroke="orange" stroke-width="2"/><text x="100" y="25" fill="#333" font-size="8" text-anchor="middle">G13/G12...</text><line x1="70" y1="70" x2="130" y2="70" stroke="black" stroke-width="2"/><text x="100" y="65" fill="#333" font-size="8" text-anchor="middle">GND</text></svg>`,
+            desc: "<span class='highlight'>CH1-CH4:</span> G13, G12, G14, G27<br><span class='highlight'>CH5-CH8:</span> G26, G25, G33, G32<br><i>*Bản tiêu chuẩn 30/38 chân.</i>"
+        }
+    };
+
+    function updateDiagram() {
+        const type = document.getElementById('chip-type').value;
+        const data = diagrams[type];
+        document.getElementById('diagram-svg').innerHTML = data.svg;
+        document.getElementById('pin-desc').innerHTML = data.desc;
+    }
+
+    // Khởi tạo sơ đồ mặc định
+    updateDiagram();
 </script>
 </body>
 </html>

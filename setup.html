@@ -3,133 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bảo Minh Setup Tool V4.2 - Pro Dashboard</title>
+    <title>Bảo Minh Factory Tool V4.3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; box-sizing: border-box;}
-        
-        /* Layout Grid */
-        .container { display: flex; gap: 20px; width: 100%; max-width: 1200px; flex-wrap: wrap; align-items: flex-start; }
-        .col { flex: 1; min-width: 350px; display: flex; flex-direction: column; gap: 20px; }
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --border-color: #30363d;
+            --primary-color: #238636; /* Xanh GitHub */
+            --primary-hover: #2ea043;
+            --danger-color: #da3633;
+            --info-color: #1f6feb;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent: #58a6ff;
+        }
 
-        /* Box Styles */
-        .box { background: #1a1a1a; padding: 25px; border-radius: 12px; border: 1px solid #333; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
-        .box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        h2, h3 { color: #00e676; margin: 0; font-size: 1.2rem; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            min-height: 100vh;
+        }
         
+        /* Layout chính */
+        .container { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 24px; 
+            width: 100%; 
+            max-width: 1100px; 
+        }
+
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+
+        /* Card Style */
+        .card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border-color); 
+            border-radius: 12px; 
+            padding: 24px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Header */
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 16px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .version-badge {
+            font-size: 0.75rem;
+            background: var(--border-color);
+            padding: 2px 8px;
+            border-radius: 12px;
+            color: var(--text-muted);
+        }
+
         /* Form Elements */
-        label { font-size: 13px; color: #aaa; margin-top: 10px; display: block; }
-        input, select { width: 100%; padding: 10px; margin-top: 5px; background: #2c2c2c; border: 1px solid #444; color: white; border-radius: 6px; box-sizing: border-box; }
-        input:focus, select:focus { border-color: #00e676; outline: none; }
+        .form-group { margin-bottom: 4px; }
+        label { 
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+            margin-bottom: 6px; 
+            display: block; 
+            font-weight: 600;
+        }
+        input, select { 
+            width: 100%; 
+            padding: 12px; 
+            background: #0d1117; 
+            border: 1px solid var(--border-color); 
+            color: #fff; 
+            border-radius: 6px; 
+            box-sizing: border-box; 
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus { 
+            border-color: var(--accent); 
+            outline: none; 
+            box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.2);
+        }
+
+        /* Grid cho Input nhỏ */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
         /* Buttons */
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        button { flex: 1; padding: 12px; font-weight: bold; cursor: pointer; border: none; border-radius: 6px; transition: 0.2s; color: #fff; }
-        .btn-save { background: #00e676; color: #000; } .btn-save:hover { background: #00c853; }
-        .btn-reset { background: #e74c3c; } .btn-reset:hover { background: #c0392b; }
-        .btn-test { background: #3498db; margin-top: 15px; width: 100%; } .btn-test:hover { background: #2980b9; }
-        .btn-clear { background: #555; padding: 5px 10px; font-size: 12px; width: auto; flex: none; }
+        .btn-group { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; margin-top: 10px; }
+        button { 
+            padding: 14px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 6px; 
+            color: #fff; 
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-test { background: #21262d; color: var(--accent); border-color: var(--border-color); width: 100%; margin-top: 10px;}
+        .btn-test:hover { background: #30363d; }
 
-        /* Log & Monitor */
-        .log-box { font-family: 'Consolas', monospace; font-size: 12px; color: #ccc; background: #000; padding: 10px; border-radius: 5px; border: 1px solid #333; overflow-y: auto; }
-        #log { height: 80px; white-space: pre-wrap; }
-        #monitor { height: 300px; color: #00ff00; }
+        .btn-reset { background: #21262d; color: var(--danger-color); border-color: var(--border-color); }
+        .btn-reset:hover { background: rgba(218, 54, 51, 0.15); border-color: var(--danger-color); }
 
-        /* Diagram */
-        #diagram-svg { width: 100%; height: auto; background: #fff; border-radius: 8px; padding: 10px; box-sizing: border-box; }
-        .pin-desc { font-size: 12px; color: #aaa; margin-top: 10px; line-height: 1.4; }
-        .highlight { color: #00e676; font-weight: bold; }
+        .btn-save { background: var(--primary-color); border: none; }
+        .btn-save:hover { background: var(--primary-hover); transform: translateY(-1px); }
+        .btn-save:active { transform: translateY(0); }
+
+        /* Terminal / Log */
+        .terminal-window {
+            background: #000;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            height: 250px;
+            overflow-y: auto;
+            color: #00ff00;
+            position: relative;
+        }
+        .terminal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;
+        }
+        .status-log {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            border-left: 3px solid var(--text-muted);
+        }
+
+        /* Diagram Area */
+        .diagram-container {
+            background: #fff;
+            border-radius: 6px;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 180px;
+        }
+        .diagram-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 12px;
+            line-height: 1.5;
+            background: rgba(56, 139, 253, 0.1);
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 3px solid var(--info-color);
+        }
+        .highlight { color: var(--accent); font-weight: bold; }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="col">
-        <div class="box">
-            <div class="box-header">
-                <h2>CẤU HÌNH THIẾT BỊ</h2>
-                <span style="font-size:11px; color:#666">V4.2</span>
-            </div>
-
-            <label>Token Xiaozhi:</label>
-            <input type="text" id="token" placeholder="Dán mã Token (ey...)">
-            
-            <div style="display: flex; gap: 10px;">
-                <div style="flex:1">
-                    <label>Tên Gốc:</label>
-                    <input type="text" id="name" value="Đèn">
-                </div>
-                <div style="flex:1">
-                    <label>Vị Trí:</label>
-                    <input type="text" id="room" value="Phòng Khách">
-                </div>
-            </div>
-
-            <label>Số Kênh:</label>
-            <select id="ch">
-                <option value="1">1 Kênh</option>
-                <option value="2">2 Kênh</option>
-                <option value="4" selected>4 Kênh</option>
-                <option value="8">8 Kênh</option>
-            </select>
-
-            <button onclick="sendTest()" class="btn-test">🔊 TEST KẾT NỐI (KÊU TẠCH)</button>
-
-            <div class="btn-group">
-                <button class="btn-reset" onclick="sendReset()" id="btnReset">🧹 FORMAT</button>
-                <button class="btn-save" onclick="sendConfig()" id="btnSave">💾 CẤU HÌNH</button>
-            </div>
-            
-            <label>Trạng thái:</label>
-            <div id="log" class="log-box">Chưa kết nối USB...</div>
+    
+    <div class="card">
+        <div class="header-title">
+            BẢO MINH FACTORY <span class="version-badge">PRO V4.3</span>
         </div>
-    </div>
 
-    <div class="col">
-        <div class="box">
-            <div class="box-header">
-                <h3>SƠ ĐỒ ĐẤU NỐI</h3>
-                <select id="chip-type" onchange="updateDiagram()" style="width: 150px; margin:0; padding:5px;">
+        <div class="form-group">
+            <label>Token Xiaozhi (Mã kết nối)</label>
+            <input type="text" id="token" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Tên Thiết Bị (Tiền tố)</label>
+                <input type="text" id="name" value="Đèn">
+            </div>
+            <div class="form-group">
+                <label>Vị Trí / Phòng</label>
+                <input type="text" id="room" value="Phòng Khách">
+            </div>
+        </div>
+
+        <div class="grid-2">
+            <div class="form-group">
+                <label>Loại Chip</label>
+                <select id="chip-type" onchange="updateDiagram()">
                     <option value="c3">ESP32-C3 Mini</option>
                     <option value="s3">ESP32-S3 Dev</option>
                     <option value="esp8266">ESP8266 (NodeMCU)</option>
                     <option value="esp32">ESP32 Standard</option>
                 </select>
             </div>
-            <div id="diagram-container">
-                <div id="diagram-svg"></div>
+            <div class="form-group">
+                <label>Số Kênh Relay</label>
+                <select id="ch">
+                    <option value="1">1 Kênh</option>
+                    <option value="2">2 Kênh</option>
+                    <option value="4" selected>4 Kênh</option>
+                    <option value="8">8 Kênh</option>
+                </select>
             </div>
-            <div id="pin-desc" class="pin-desc"></div>
         </div>
 
-        <div class="box">
-            <div class="box-header">
-                <h3>SERIAL MONITOR</h3>
-                <button class="btn-clear" onclick="clearMonitor()">Xóa</button>
+        <button onclick="sendTest()" class="btn-test">
+            🔊 KIỂM TRA KẾT NỐI (TEST SOUND)
+        </button>
+
+        <div class="btn-group">
+            <button class="btn-reset" onclick="sendReset()" id="btnReset">
+                🧹 FORMAT
+            </button>
+            <button class="btn-save" onclick="sendConfig()" id="btnSave">
+                💾 CẤU HÌNH & LƯU
+            </button>
+        </div>
+
+        <div id="log" class="status-log">
+            > Trạng thái: Chờ kết nối USB...
+        </div>
+    </div>
+
+    <div class="card">
+        
+        <div>
+            <label>SƠ ĐỒ ĐẤU NỐI (WIRING DIAGRAM)</label>
+            <div id="diagram-container" class="diagram-container">
+                <div id="diagram-svg" style="width: 100%;"></div>
             </div>
-            <div id="monitor" class="log-box"></div>
-            <div style="margin-top:5px; font-size:11px; color:#666">
-                <input type="checkbox" id="autoscroll" checked style="width:auto; margin:0; vertical-align:middle"> 
-                Tự động cuộn xuống
+            <div id="pin-desc" class="diagram-desc"></div>
+        </div>
+
+        <div style="flex-grow: 1; display: flex; flex-direction: column;">
+            <div class="terminal-header">
+                <span>SERIAL MONITOR</span>
+                <button onclick="clearMonitor()" style="background:none; border:none; color:#666; padding:0; font-size:10px; width:auto;">CLEAR</button>
+            </div>
+            <div id="monitor" class="terminal-window">
+                <div style="color:#555">Waiting for serial data...</div>
+            </div>
+            <div style="margin-top:5px; font-size:11px; color:#666; display:flex; align-items:center; gap:5px;">
+                <input type="checkbox" id="autoscroll" checked style="width:auto; margin:0;"> 
+                Auto-scroll
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- PHẦN LOGIC CŨ (GIỮ NGUYÊN) ---
     let port;
     let writer;
     
     function log(msg, color="#ccc") {
         const d = document.getElementById('log');
-        d.innerHTML += `<div style="color:${color}">> ${msg}</div>`;
-        d.scrollTop = d.scrollHeight;
+        // Update style based on message type
+        if(color.includes("00ff00") || color === "green") d.style.borderLeftColor = "#238636";
+        else if(color.includes("red")) d.style.borderLeftColor = "#da3633";
+        else d.style.borderLeftColor = "#8b949e";
+        
+        d.innerHTML = `> ${msg}`;
     }
 
-    // Hàm Monitor mới
     function logMonitor(text) {
         const m = document.getElementById('monitor');
-        // Thay thế ký tự xuống dòng để hiển thị đẹp
+        // Xóa dòng waiting nếu có
+        if(m.innerHTML.includes("Waiting for serial data...")) m.innerHTML = "";
+        
         const formatted = text.replace(/\n/g, '<br>');
         m.innerHTML += formatted;
         
@@ -139,7 +308,7 @@
     }
 
     function clearMonitor() {
-        document.getElementById('monitor').innerHTML = "";
+        document.getElementById('monitor').innerHTML = "<div style='color:#555'>Waiting for serial data...</div>";
     }
 
     async function connect() {
@@ -148,12 +317,11 @@
                 port = await navigator.serial.requestPort();
                 await port.open({ baudRate: 115200 });
                 writer = port.writable.getWriter();
-                log("Đã kết nối USB.", "#00e676");
-                // Đọc phản hồi
+                log("Đã kết nối USB.", "#238636");
                 readLoop();
                 return true;
             } catch (err) {
-                log("Lỗi kết nối: " + err, "red");
+                log("Lỗi kết nối: " + err, "#da3633");
                 return false;
             }
         }
@@ -169,25 +337,22 @@
                 if (done) break;
                 const text = decoder.decode(value);
                 
-                // Đẩy dữ liệu thô vào Monitor
                 logMonitor(text);
 
-                // Logic phân tích phản hồi cũ
                 if (text.includes("CONF_OK")) {
-                    log("✅ THÀNH CÔNG! (Chip đã lưu)", "#00ff00");
-                    alert("Cấu hình thành công! Nghe tiếng tạch dài là OK.");
+                    log("✅ CẤU HÌNH THÀNH CÔNG!", "#238636");
+                    // alert("Thành công! Chip đã nhận cấu hình.");
                 }
                 if (text.includes("TEST_OK")) {
-                    log("✅ KẾT NỐI TỐT!", "#3498db");
+                    log("✅ KẾT NỐI TỐT (Test OK)", "#58a6ff");
                 }
                 if (text.includes("RESET_OK")) {
-                    log("✅ ĐÃ FORMAT XONG!", "orange");
-                    alert("Đã xóa sạch chip. Giờ hãy nạp cấu hình.");
+                    log("⚠️ ĐÃ FORMAT XONG. HÃY NẠP LẠI.", "#da3633");
+                    alert("Đã xóa sạch. Hãy bấm Cấu hình ngay.");
                 }
             }
         } catch (error) {
             console.error(error);
-            log("Lỗi đọc: " + error, "red");
         } finally {
             reader.releaseLock();
         }
@@ -195,14 +360,14 @@
 
     async function sendTest() {
         if (!await connect()) return;
-        log("Gửi lệnh Test...", "#fff");
+        log("Đang gửi lệnh Test...", "#fff");
         await writer.write(new TextEncoder().encode("CMD:TEST\n"));
     }
 
     async function sendReset() {
         if (!await connect()) return;
-        if (!confirm("Xóa sạch chip?")) return;
-        log("Gửi lệnh Format...", "orange");
+        if (!confirm("Bạn có chắc chắn muốn XÓA SẠCH chip?")) return;
+        log("Đang gửi lệnh Format...", "#da3633");
         await writer.write(new TextEncoder().encode("CMD:RESET\n"));
     }
 
@@ -212,15 +377,18 @@
         const room = document.getElementById('room').value.trim();
         const ch = document.getElementById('ch').value;
 
-        if (!token) return alert("Thiếu Token!");
+        if (!token) {
+             alert("Vui lòng nhập Token!");
+             document.getElementById('token').focus();
+             return;
+        }
         if (!await connect()) return;
 
         const cmd = `SET_CONFIG:${token},${name},${room},${ch}\n`;
-        log("Đang gửi cấu hình...", "#fff");
+        log("Đang nạp cấu hình...", "#fff");
         await writer.write(new TextEncoder().encode(cmd));
     }
 
-    // --- PHẦN LOGIC MỚI: VẼ SƠ ĐỒ ---
     const diagrams = {
         c3: {
             svg: `<svg viewBox="0 0 200 120" style="width:100%"><rect x="10" y="10" width="60" height="80" fill="#333" rx="4"/><text x="40" y="55" fill="#fff" font-size="10" text-anchor="middle">ESP32-C3</text><rect x="130" y="10" width="60" height="80" fill="#2980b9" rx="4"/><text x="160" y="55" fill="#fff" font-size="10" text-anchor="middle">RELAY</text><line x1="70" y1="30" x2="130" y2="30" stroke="orange" stroke-width="2"/><text x="100" y="25" fill="#333" font-size="8" text-anchor="middle">GPIO</text><line x1="70" y1="70" x2="130" y2="70" stroke="black" stroke-width="2"/><text x="100" y="65" fill="#333" font-size="8" text-anchor="middle">GND</text></svg>`,
@@ -247,7 +415,6 @@
         document.getElementById('pin-desc').innerHTML = data.desc;
     }
 
-    // Khởi tạo sơ đồ mặc định
     updateDiagram();
 </script>
 </body>
